@@ -19,11 +19,12 @@ type Props = {
   title: string
   data: FocusTimeDatum[]
   seriesLabel: string
+  isLoading?: boolean
 }
 
 const RANGES = ['Last 7 Days', 'Last 14 Days', 'Last 30 Days']
 
-export default function FocusTimeChart({ title, data, seriesLabel }: Props) {
+export default function FocusTimeChart({ title, data, seriesLabel, isLoading }: Props) {
   const [open, setOpen] = useState(false)
   const [range, setRange] = useState(RANGES[0])
 
@@ -63,53 +64,58 @@ export default function FocusTimeChart({ title, data, seriesLabel }: Props) {
         </div>
       </div>
 
-      <div className="mt-1 text-xs text-gray-500">Hours</div>
+      <div className="mt-1 text-xs text-gray-500">Minutes</div>
 
       <div className="mt-2 h-[260px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-            <defs>
-              <linearGradient id="focusFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#C4A97D" stopOpacity={0.55} />
-                <stop offset="100%" stopColor="#C4A97D" stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke="#2e2e34" strokeDasharray="3 4" vertical={false} />
-            <XAxis
-              dataKey="date"
-              tick={{ fill: '#9ca3af', fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              tick={{ fill: '#9ca3af', fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-              domain={[0, 250]}
-              ticks={[0, 50, 100, 150, 200, 250]}
-            />
-            <Tooltip
-              contentStyle={{
-                background: '#1c1c20',
-                border: '1px solid #2e2e34',
-                borderRadius: 8,
-                color: '#fff',
-                fontSize: 12,
-              }}
-              cursor={{ stroke: '#C4A97D', strokeOpacity: 0.4 }}
-              formatter={(v) => [`${v} h`, seriesLabel]}
-            />
-            <Area
-              type="monotone"
-              dataKey="hours"
-              stroke="#C4A97D"
-              strokeWidth={2}
-              fill="url(#focusFill)"
-              dot={{ r: 4, fill: '#C4A97D', stroke: '#1c1c20', strokeWidth: 2 }}
-              activeDot={{ r: 5 }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        {isLoading ? (
+          <div className="flex h-full items-center justify-center text-sm text-gray-400">
+            Loading chart data...
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="focusFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#C4A97D" stopOpacity={0.55} />
+                  <stop offset="100%" stopColor="#C4A97D" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="#2e2e34" strokeDasharray="3 4" vertical={false} />
+              <XAxis
+                dataKey="date"
+                tick={{ fill: '#9ca3af', fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fill: '#9ca3af', fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+                domain={[0, 'auto']}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: '#1c1c20',
+                  border: '1px solid #2e2e34',
+                  borderRadius: 8,
+                  color: '#fff',
+                  fontSize: 12,
+                }}
+                cursor={{ stroke: '#C4A97D', strokeOpacity: 0.4 }}
+                formatter={(v) => [`${v} mins`, seriesLabel]}
+              />
+              <Area
+                type="monotone"
+                dataKey="hours"
+                stroke="#C4A97D"
+                strokeWidth={2}
+                fill="url(#focusFill)"
+                dot={{ r: 4, fill: '#C4A97D', stroke: '#1c1c20', strokeWidth: 2 }}
+                activeDot={{ r: 5 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
       <div className="mt-2 flex items-center justify-center gap-2 text-xs text-gray-300">
