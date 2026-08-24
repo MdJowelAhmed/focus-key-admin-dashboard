@@ -6,25 +6,26 @@ import AuthIllustration from '../../components/auth/AuthIllustration'
 import FormField from '../../components/auth/FormField'
 import PasswordField from '../../components/auth/PasswordField'
 import PrimaryButton from '../../components/auth/PrimaryButton'
-import { useAuthStore } from '../../store/useAuthStore'
+import { useLoginMutation } from '../../hooks/useAuthMutations'
 
 export default function Login() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  const { login, isLoading, error, clearError } = useAuthStore()
+  const { mutate: login, isPending, error, reset } = useLoginMutation()
 
-  const onSubmit = async (e: FormEvent) => {
+  const onSubmit = (e: FormEvent) => {
     e.preventDefault()
-    clearError()
 
-    try {
-      await login({ email, password })
-      navigate('/dashboard')
-    } catch {
-      // Error state is managed by useAuthStore
-    }
+    login(
+      { email, password },
+      {
+        onSuccess: () => {
+          navigate('/dashboard')
+        },
+      }
+    )
   }
 
   return (
@@ -34,7 +35,7 @@ export default function Login() {
       <AuthCard description="Welcome back! Please enter your details.">
         {error && (
           <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600 border border-red-200">
-            {error}
+            {error.message}
           </div>
         )}
 
@@ -48,7 +49,7 @@ export default function Login() {
             value={email}
             onChange={(e) => {
               setEmail(e.target.value)
-              if (error) clearError()
+              if (error) reset()
             }}
             required
           />
@@ -61,7 +62,7 @@ export default function Login() {
               value={password}
               onChange={(val) => {
                 setPassword(val)
-                if (error) clearError()
+                if (error) reset()
               }}
               placeholder="Enter your password"
             />
@@ -75,8 +76,8 @@ export default function Login() {
             </div>
           </div>
 
-          <PrimaryButton type="submit" disabled={isLoading}>
-            {isLoading ? 'Signing in...' : 'Sign in'}
+          <PrimaryButton type="submit" disabled={isPending}>
+            {isPending ? 'Signing in...' : 'Sign in'}
           </PrimaryButton>
         </form>
       </AuthCard>
