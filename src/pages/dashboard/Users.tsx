@@ -1,50 +1,91 @@
 import { useMemo, useState } from 'react'
 import {
-  ChevronDown,
-  Clock,
-  Filter,
+  Activity,
   Nfc,
   Search,
+  Trash2,
   UserCheck,
   Users as UsersIcon,
 } from 'lucide-react'
+import { Popconfirm } from 'antd'
 import DeltaStatCard from '../../components/dashboard/DeltaStatCard'
-import {
-  SETUP_STAGES,
-  DIRECTORY_STATUSES,
-  directoryUsers,
-  type DirectoryStatus,
-  type DirectoryUser,
-  type SetupStage,
-} from '../../components/dashboard/usersDirectoryData'
-
-const headlineStats = [
-  { label: 'Total Users', value: '12,482', delta: '8.6%', icon: UsersIcon },
-  { label: 'Activated Users', value: '8,932', delta: '12.3%', icon: UserCheck },
-  { label: 'Pending Setup', value: '1,987', delta: '7.1%', icon: Clock },
-  { label: 'NFC Linked', value: '9,876', delta: '10.7%', icon: Nfc },
-]
-
-const SETUP_STAGE_OPTIONS = ['All Setup Stages', ...SETUP_STAGES] as const
-const STATUS_OPTIONS = ['All Statuses', ...DIRECTORY_STATUSES] as const
-
-type SetupStageFilter = (typeof SETUP_STAGE_OPTIONS)[number]
-type StatusFilter = (typeof STATUS_OPTIONS)[number]
+import { useAnalyticsStats } from '../../hooks/useAnalytics'
+import { useDeleteUser, useUpdateUserStatus, useUsersAnalytics } from '../../hooks/useUsers'
 
 export default function Users() {
+  const [page, setPage] = useState(1)
+  const [limit] = useState(10)
   const [search, setSearch] = useState('')
-  const [setupStage, setSetupStage] = useState<SetupStageFilter>('All Setup Stages')
-  const [status, setStatus] = useState<StatusFilter>('All Statuses')
+  const [statusFilter, setStatusFilter] = useState<string>('ALL')
 
-  const filtered = useMemo(() => {
+  const { data: statsData, isLoading: isStatsLoading } = useAnalyticsStats()
+  const { data: usersResponse, isLoading: isUsersLoading } = useUsersAnalytics(page, limit)
+
+  const updateUserStatus = useUpdateUserStatus()
+  const deleteUser = useDeleteUser()
+
+  const formatter = new Intl.NumberFormat('en-US')
+
+  const headlineStats = [
+    {
+      label: 'Total Users',
+      value: isStatsLoading ? '...' : formatter.format(statsData?.totalUsers ?? 0),
+      delta: 'Live',
+      icon: UsersIcon,
+    },
+    {
+      label: 'Activated Users',
+      value: isStatsLoading ? '...' : formatter.format(statsData?.activatedUsers ?? 0),
+      delta: 'Live',
+      icon: UserCheck,
+    },
+    {
+      label: '7-Day Active Users',
+      value: isStatsLoading ? '...' : formatter.format(statsData?.sevenDayActiveUsers ?? 0),
+      delta: 'Live',
+      icon: Activity,
+    },
+    {
+      label: 'Users With Partners',
+      value: isStatsLoading ? '...' : formatter.format(statsData?.usersWithPartners ?? 0),
+      delta: 'Live',
+      icon: Nfc,
+    },
+  ]
+
+  const usersList = usersResponse?.data || []
+  const meta = usersResponse?.meta
+
+  const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase()
-    return directoryUsers.filter((u) => {
-      if (setupStage !== 'All Setup Stages' && u.setupStage !== setupStage) return false
-      if (status !== 'All Statuses' && u.status !== status) return false
+    return usersList.filter((u) => {
+      if (statusFilter !== 'ALL' && u.status !== statusFilter) return false
       if (!term) return true
-      return u.email.toLowerCase().includes(term)
+      return (
+        (u.name && u.name.toLowerCase().includes(term)) ||
+        (u.email && u.email.toLowerCase().includes(term))
+      )
     })
-  }, [search, setupStage, status])
+  }, [usersList, search, statusFilter])
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return 'N/A'
+    const date = new Date(dateStr)
+    if (isNaN(date.getTime())) return dateStr
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  }
+
+  const formatFocusTime = (minutes: number) => {
+    if (!minutes) return '0 mins'
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    if (hours === 0) return `${mins} mins`
+    return `${hours}h ${mins}m`
+  }
 
   return (
     <div className="flex flex-col gap-6 pb-6">
@@ -77,167 +118,186 @@ export default function Users() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Dropdown
-              value={setupStage}
-              options={SETUP_STAGE_OPTIONS as readonly string[]}
-              onChange={(v) => setSetupStage(v as SetupStageFilter)}
-              width={170}
-            />
-            <Dropdown
-              value={status}
-              options={STATUS_OPTIONS as readonly string[]}
-              onChange={(v) => setStatus(v as StatusFilter)}
-              width={150}
-            />
-            <button
-              type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-md border border-surface-border bg-surface-elevated text-gray-300 transition-colors hover:text-white"
-              aria-label="Advanced filters"
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-10 rounded-md border border-surface-border bg-surface-elevated px-3 text-sm text-gray-200 focus:border-brand focus:outline-none"
             >
-              <Filter size={16} />
-            </button>
+              <option value="ALL">All Statuses</option>
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="INACTIVE">INACTIVE</option>
+            </select>
           </div>
         </div>
 
         <div className="mt-5 overflow-x-auto">
-          <table className="w-full min-w-[820px] text-sm">
+          <table className="w-full min-w-[950px] text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-500">
+              <tr className="text-left text-xs text-gray-400">
                 <th className="border-b border-surface-border pb-3 pl-1 font-medium">User</th>
+                <th className="border-b border-surface-border pb-3 font-medium">Status</th>
+                <th className="border-b border-surface-border pb-3 font-medium">Pairing</th>
+                <th className="border-b border-surface-border pb-3 font-medium">Sessions</th>
+                <th className="border-b border-surface-border pb-3 font-medium">Locks / Unlocks</th>
+                <th className="border-b border-surface-border pb-3 font-medium">Focus Time</th>
+                <th className="border-b border-surface-border pb-3 font-medium">Breaks</th>
                 <th className="border-b border-surface-border pb-3 font-medium">Registered</th>
-                <th className="border-b border-surface-border pb-3 font-medium">Setup Stage</th>
-                <th className="border-b border-surface-border pb-3 font-medium">NFC Status</th>
                 <th className="border-b border-surface-border pb-3 font-medium">Last Active</th>
-                <th className="border-b border-surface-border pb-3 font-medium">Total Sessions</th>
-                <th className="border-b border-surface-border pb-3 pr-1 font-medium">Status</th>
+                <th className="border-b border-surface-border pb-3 pr-1 text-right font-medium">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border">
-              {filtered.map((user) => (
-                <UserRow key={user.key} user={user} />
-              ))}
-              {filtered.length === 0 && (
+              {isUsersLoading ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-sm text-gray-500">
-                    No users match your filters.
+                  <td colSpan={10} className="py-8 text-center text-sm text-gray-400">
+                    Loading users...
                   </td>
                 </tr>
+              ) : filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="py-8 text-center text-sm text-gray-400">
+                    No users found matching criteria.
+                  </td>
+                </tr>
+              ) : (
+                filteredUsers.map((user) => (
+                  <tr key={user.userId} className="text-gray-200 hover:bg-surface-elevated/30">
+                    <td className="py-3 pl-1">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand/30 text-xs font-semibold text-brand-ring">
+                          {user.profileImage ? (
+                            <img
+                              src={user.profileImage}
+                              alt={user.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span>
+                              {user.name
+                                ? user.name
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .slice(0, 2)
+                                    .join('')
+                                    .toUpperCase()
+                                : 'U'}
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-medium text-white">{user.name || 'N/A'}</div>
+                          <div className="text-xs text-gray-400">{user.email}</div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="py-3">
+                      <select
+                        value={user.status}
+                        disabled={updateUserStatus.isPending}
+                        onChange={(e) =>
+                          updateUserStatus.mutate({
+                            userId: user.userId,
+                            status: e.target.value as 'ACTIVE' | 'INACTIVE',
+                          })
+                        }
+                        className={`rounded-md border px-2.5 py-1 text-xs font-medium focus:outline-none ${
+                          user.status === 'ACTIVE'
+                            ? 'border-accent-success/40 bg-accent-pitchSoft/40 text-accent-success'
+                            : 'border-surface-border bg-surface-elevated text-gray-400'
+                        }`}
+                      >
+                        <option value="ACTIVE" className="bg-surface-card text-white">
+                          ACTIVE
+                        </option>
+                        <option value="INACTIVE" className="bg-surface-card text-white">
+                          INACTIVE
+                        </option>
+                      </select>
+                    </td>
+
+                    <td className="py-3">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          user.isPaired
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-gray-500/15 text-gray-400 border border-gray-500/30'
+                        }`}
+                      >
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            user.isPaired ? 'bg-emerald-400' : 'bg-gray-400'
+                          }`}
+                        />
+                        {user.isPaired ? 'Paired' : 'Unpaired'}
+                      </span>
+                    </td>
+
+                    <td className="py-3 text-gray-300">{user.totalSessions}</td>
+                    <td className="py-3 text-gray-300">
+                      {user.totalLocks} / {user.totalUnlocks}
+                    </td>
+                    <td className="py-3 text-gray-300">{formatFocusTime(user.totalFocusTime)}</td>
+                    <td className="py-3 text-gray-300">{user.breakCount}</td>
+                    <td className="py-3 text-gray-300">{formatDate(user.registeredAt)}</td>
+                    <td className="py-3 text-gray-300">{formatDate(user.lastActiveAt)}</td>
+
+                    <td className="py-3 pr-1 text-right">
+                      <Popconfirm
+                        title="Delete User"
+                        description="Are you sure you want to delete this user?"
+                        onConfirm={() => deleteUser.mutate(user.userId)}
+                        okText="Yes, Delete"
+                        cancelText="Cancel"
+                        okButtonProps={{ danger: true }}
+                      >
+                        <button
+                          type="button"
+                          disabled={deleteUser.isPending}
+                          className="rounded-md p-1.5 text-gray-400 hover:bg-red-500/15 hover:text-red-400 transition-colors"
+                          title="Delete user"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </Popconfirm>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
-      </section>
-    </div>
-  )
-}
 
-function UserRow({ user }: { user: DirectoryUser }) {
-  return (
-    <tr className="text-gray-200">
-      <td className="py-3 pl-1">
-        <div className="flex items-center gap-3">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand/30 text-xs font-semibold text-brand-ring">
-            {user.initials}
-          </span>
-          <span className="text-gray-200">{user.email}</span>
-        </div>
-      </td>
-      <td className="py-3 text-gray-300">{user.registered}</td>
-      <td className="py-3">
-        <SetupStageBadge stage={user.setupStage} />
-      </td>
-      <td className="py-3">
-        <NfcStatusBadge nfc={user.nfcStatus} />
-      </td>
-      <td className="py-3 text-gray-300">{user.lastActive}</td>
-      <td className="py-3 text-gray-300">{user.totalSessions}</td>
-      <td className="py-3 pr-1">
-        <StatusPill status={user.status} />
-      </td>
-    </tr>
-  )
-}
-
-function SetupStageBadge({ stage }: { stage: SetupStage }) {
-  const dotColor =
-    stage === 'Setup Completed'
-      ? 'bg-accent-success'
-      : stage === 'Invite Sent'
-      ? 'bg-gray-400'
-      : 'bg-brand'
-  return (
-    <span className="inline-flex items-center gap-2 text-gray-200">
-      <span className={`h-2 w-2 rounded-full ${dotColor}`} />
-      {stage}
-    </span>
-  )
-}
-
-function NfcStatusBadge({ nfc }: { nfc: 'Linked' | 'Not Linked' }) {
-  const dot = nfc === 'Linked' ? 'bg-accent-success' : 'bg-accent-danger'
-  return (
-    <span className="inline-flex items-center gap-2 text-gray-200">
-      <span className={`h-2 w-2 rounded-full ${dot}`} />
-      {nfc}
-    </span>
-  )
-}
-
-function StatusPill({ status }: { status: DirectoryStatus }) {
-  const map: Record<DirectoryStatus, string> = {
-    Active: 'bg-accent-pitchSoft/40 text-accent-success border border-accent-success/30',
-    Pending: 'bg-brand/15 text-brand border border-brand/30',
-    Inactive: 'bg-surface-elevated text-gray-400 border border-surface-border',
-  }
-  return (
-    <span
-      className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium ${map[status]}`}
-    >
-      {status}
-    </span>
-  )
-}
-
-type DropdownProps = {
-  value: string
-  options: readonly string[]
-  onChange: (v: string) => void
-  width?: number
-}
-
-function Dropdown({ value, options, onChange, width }: DropdownProps) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        style={{ width }}
-        className="flex h-10 items-center justify-between gap-2 rounded-md border border-surface-border bg-surface-elevated px-3 text-sm text-gray-200 transition-colors hover:text-white"
-      >
-        <span className="truncate">{value}</span>
-        <ChevronDown size={14} />
-      </button>
-      {open && (
-        <ul className="absolute right-0 z-10 mt-1 w-full min-w-[160px] overflow-hidden rounded-md border border-surface-border bg-surface-elevated shadow-lg">
-          {options.map((opt) => (
-            <li key={opt}>
+        {meta && meta.totalPage > 1 && (
+          <div className="mt-5 flex items-center justify-between border-t border-surface-border pt-4 text-xs text-gray-400">
+            <div>
+              Showing page <span className="font-semibold text-white">{meta.page}</span> of{' '}
+              <span className="font-semibold text-white">{meta.totalPage}</span> ({meta.total} total
+              users)
+            </div>
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  onChange(opt)
-                  setOpen(false)
-                }}
-                className={`block w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-card ${
-                  opt === value ? 'text-brand' : 'text-gray-200'
-                }`}
+                disabled={page <= 1 || isUsersLoading}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="rounded-md border border-surface-border bg-surface-elevated px-3 py-1.5 text-gray-200 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {opt}
+                Previous
               </button>
-            </li>
-          ))}
-        </ul>
-      )}
+              <button
+                type="button"
+                disabled={page >= meta.totalPage || isUsersLoading}
+                onClick={() => setPage((p) => Math.min(meta.totalPage, p + 1))}
+                className="rounded-md border border-surface-border bg-surface-elevated px-3 py-1.5 text-gray-200 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
     </div>
   )
 }
