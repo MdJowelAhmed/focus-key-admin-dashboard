@@ -1,25 +1,26 @@
-import { useMemo, useState } from 'react'
-import {
-  Activity,
-  Nfc,
-  Search,
-  Trash2,
-  UserCheck,
-  Users as UsersIcon,
-} from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { Activity, Nfc, Trash2, UserCheck, Users as UsersIcon } from 'lucide-react'
 import { Popconfirm } from 'antd'
 import DeltaStatCard from '../../components/dashboard/DeltaStatCard'
 import { useAnalyticsStats } from '../../hooks/useAnalytics'
 import { useDeleteUser, useUpdateUserStatus, useUsersAnalytics } from '../../hooks/useUsers'
+import { Filtering, Pagination, SearchingInput } from '../../components/share'
 
 export default function Users() {
-  const [page, setPage] = useState(1)
-  const [limit] = useState(10)
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('ALL')
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const search = searchParams.get('search') || ''
+  const statusFilter = searchParams.get('status') || 'ALL'
+  const page = parseInt(searchParams.get('page') || '1', 10)
+  const limit = 10
 
   const { data: statsData, isLoading: isStatsLoading } = useAnalyticsStats()
-  const { data: usersResponse, isLoading: isUsersLoading } = useUsersAnalytics(page, limit)
+  const { data: usersResponse, isLoading: isUsersLoading } = useUsersAnalytics({
+    page,
+    limit,
+    searchTerm: search,
+    status: statusFilter,
+  })
 
   const updateUserStatus = useUpdateUserStatus()
   const deleteUser = useDeleteUser()
@@ -56,17 +57,33 @@ export default function Users() {
   const usersList = usersResponse?.data || []
   const meta = usersResponse?.meta
 
-  const filteredUsers = useMemo(() => {
-    const term = search.trim().toLowerCase()
-    return usersList.filter((u) => {
-      if (statusFilter !== 'ALL' && u.status !== statusFilter) return false
-      if (!term) return true
-      return (
-        (u.name && u.name.toLowerCase().includes(term)) ||
-        (u.email && u.email.toLowerCase().includes(term))
-      )
-    })
-  }, [usersList, search, statusFilter])
+  const handleSearchChange = (newSearch: string) => {
+    const newParams = new URLSearchParams(searchParams)
+    if (newSearch.trim()) {
+      newParams.set('search', newSearch.trim())
+    } else {
+      newParams.delete('search')
+    }
+    newParams.set('page', '1')
+    setSearchParams(newParams)
+  }
+
+  const handleStatusChange = (newStatus: string) => {
+    const newParams = new URLSearchParams(searchParams)
+    if (newStatus && newStatus !== 'ALL') {
+      newParams.set('status', newStatus)
+    } else {
+      newParams.delete('status')
+    }
+    newParams.set('page', '1')
+    setSearchParams(newParams)
+  }
+
+  const handlePageChange = (newPage: number) => {
+    const newParams = new URLSearchParams(searchParams)
+    newParams.set('page', String(newPage))
+    setSearchParams(newParams)
+  }
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'N/A'
@@ -103,31 +120,29 @@ export default function Users() {
 
       <section className="rounded-2xl border border-surface-border bg-surface-card p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="relative w-full max-w-md">
-            <Search
-              size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-            />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search users by name or email..."
-              className="h-10 w-full rounded-full border border-surface-border bg-surface-elevated/70 pl-9 pr-3 text-sm text-white placeholder:text-gray-500 focus:border-brand focus:outline-none"
-            />
-          </div>
+          <SearchingInput
+            value={search}
+            onChange={handleSearchChange}
+            placeholder="Search users by name or email..."
+            className="w-full max-w-md"
+          />
 
-          <div className="flex items-center gap-2">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 rounded-md border border-surface-border bg-surface-elevated px-3 text-sm text-gray-200 focus:border-brand focus:outline-none"
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="INACTIVE">INACTIVE</option>
-            </select>
-          </div>
+          <Filtering
+            variant="inline"
+            fields={[
+              {
+                key: 'status',
+                placeholder: 'Filter by status',
+                value: statusFilter === 'ALL' ? '' : statusFilter,
+                onChange: (val) => handleStatusChange(val || 'ALL'),
+                options: [
+                  { label: 'All Statuses', value: 'ALL' },
+                  { label: 'ACTIVE', value: 'ACTIVE' },
+                  { label: 'INACTIVE', value: 'INACTIVE' },
+                ],
+              },
+            ]}
+          />
         </div>
 
         <div className="mt-5 overflow-x-auto">
@@ -155,14 +170,14 @@ export default function Users() {
                     Loading users...
                   </td>
                 </tr>
-              ) : filteredUsers.length === 0 ? (
+              ) : usersList.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="py-8 text-center text-sm text-gray-400">
                     No users found matching criteria.
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => (
+                usersList.map((user) => (
                   <tr key={user.userId} className="text-gray-200 hover:bg-surface-elevated/30">
                     <td className="py-3 pl-1">
                       <div className="flex items-center gap-3">
@@ -270,32 +285,14 @@ export default function Users() {
           </table>
         </div>
 
-        {meta && meta.totalPage > 1 && (
-          <div className="mt-5 flex items-center justify-between border-t border-surface-border pt-4 text-xs text-gray-400">
-            <div>
-              Showing page <span className="font-semibold text-white">{meta.page}</span> of{' '}
-              <span className="font-semibold text-white">{meta.totalPage}</span> ({meta.total} total
-              users)
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={page <= 1 || isUsersLoading}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="rounded-md border border-surface-border bg-surface-elevated px-3 py-1.5 text-gray-200 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                disabled={page >= meta.totalPage || isUsersLoading}
-                onClick={() => setPage((p) => Math.min(meta.totalPage, p + 1))}
-                className="rounded-md border border-surface-border bg-surface-elevated px-3 py-1.5 text-gray-200 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+        {meta && (
+          <Pagination
+            currentPage={meta.page}
+            totalPages={meta.totalPage}
+            totalItems={meta.total}
+            itemsPerPage={limit}
+            onPageChange={handlePageChange}
+          />
         )}
       </section>
     </div>

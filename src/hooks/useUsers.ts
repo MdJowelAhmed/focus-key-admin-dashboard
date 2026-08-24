@@ -4,12 +4,35 @@ import { AxiosError } from 'axios'
 import { api } from '../api/axiosInstance'
 import type { UserAnalyticsResponse } from '../types/analytics'
 
-export function useUsersAnalytics(page = 1, limit = 10) {
+export function useUsersAnalytics({
+  page = 1,
+  limit = 10,
+  searchTerm = '',
+  status = '',
+}: {
+  page?: number
+  limit?: number
+  searchTerm?: string
+  status?: string
+} = {}) {
   return useQuery({
-    queryKey: ['analytics', 'users', page, limit],
+    queryKey: ['analytics', 'users', page, limit, searchTerm, status],
     queryFn: async () => {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+      })
+
+      if (searchTerm.trim()) {
+        params.append('searchTerm', searchTerm.trim())
+      }
+
+      if (status && status !== 'ALL') {
+        params.append('status', status)
+      }
+
       const response = await api.get<UserAnalyticsResponse>(
-        `/analytics/users?page=${page}&limit=${limit}`
+        `/analytics/users?${params.toString()}`
       )
       return response.data
     },
