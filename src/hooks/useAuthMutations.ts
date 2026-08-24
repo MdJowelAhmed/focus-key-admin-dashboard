@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import { AxiosError } from 'axios'
+import { message } from 'antd'
 import { api } from '../api/axiosInstance'
 import type { LoginCredentials, LoginApiResponse } from '../types/auth'
 import { useAuthStore } from '../store/useAuthStore'
@@ -27,6 +28,10 @@ export function useLoginMutation() {
       if (token) {
         setAuth(token, user)
       }
+      message.success(data.message || 'User login successfully')
+    },
+    onError: (error) => {
+      message.error(error.message || 'Login failed. Please try again.')
     },
   })
 }
