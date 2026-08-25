@@ -18,6 +18,8 @@ import {
   useGetProfile,
   useUpdateProfile,
 } from '../../hooks/useProfile'
+import { useGetRule, useSaveRule } from '../../hooks/useRules'
+import type { RuleType } from '../../types/rules'
 
 type TabKey = 'profile' | 'password' | 'about' | 'privacy' | 'terms'
 
@@ -35,20 +37,8 @@ const tabs: Tab[] = [
   { key: 'terms', label: 'Terms of Service', icon: FileText },
 ]
 
-const initialAbout =
-  '<h2>About Focus Key</h2><p>Focus Key helps teams build healthier digital habits through gentle accountability and shared focus sessions.</p>'
-
-const initialPrivacy =
-  '<h2>Privacy Policy</h2><p>We respect your privacy. This policy explains what data we collect, how we use it, and the choices you have.</p>'
-
-const initialTerms =
-  '<h2>Terms of Service</h2><p>By using Focus Key, you agree to the terms outlined below. Please read them carefully before using the service.</p>'
-
 export default function Settings() {
   const [activeTab, setActiveTab] = useState<TabKey>('profile')
-  const [aboutHtml, setAboutHtml] = useState(initialAbout)
-  const [privacyHtml, setPrivacyHtml] = useState(initialPrivacy)
-  const [termsHtml, setTermsHtml] = useState(initialTerms)
 
   return (
     <div className="-mx-8 -mb-10 min-h-full bg-[#f6f7fb] px-8 py-8 text-slate-900">
@@ -88,26 +78,23 @@ export default function Settings() {
           {activeTab === 'password' && <PasswordTab />}
           {activeTab === 'about' && (
             <EditorTab
+              type="ABOUT"
               title="About Us"
               description="Update the About Us content shown to your users."
-              value={aboutHtml}
-              onChange={setAboutHtml}
             />
           )}
           {activeTab === 'privacy' && (
             <EditorTab
+              type="PRIVACY"
               title="Privacy Policy"
               description="Update the Privacy Policy content shown to your users."
-              value={privacyHtml}
-              onChange={setPrivacyHtml}
             />
           )}
           {activeTab === 'terms' && (
             <EditorTab
+              type="TERMS"
               title="Terms of Service"
               description="Update the Terms of Service content shown to your users."
-              value={termsHtml}
-              onChange={setTermsHtml}
             />
           )}
         </section>
@@ -332,15 +319,33 @@ function PasswordTab() {
 }
 
 type EditorTabProps = {
+  type: RuleType
   title: string
   description: string
-  value: string
-  onChange: (value: string) => void
 }
 
-function EditorTab({ title, description, value, onChange }: EditorTabProps) {
+function EditorTab({ type, title, description }: EditorTabProps) {
+  const { data: ruleData, isLoading } = useGetRule(type)
+  const saveRule = useSaveRule()
+  const [content, setContent] = useState('')
+
+  useEffect(() => {
+    if (ruleData?.content !== undefined) {
+      setContent(ruleData.content)
+    }
+  }, [ruleData])
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    saveRule.mutate({ type, content })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-8 text-center text-sm text-slate-500">
+        Loading {title}...
+      </div>
+    )
   }
 
   return (
@@ -351,15 +356,16 @@ function EditorTab({ title, description, value, onChange }: EditorTabProps) {
       </div>
 
       <div className="px-8 py-7">
-        <RichTextEditor value={value} onChange={onChange} />
+        <RichTextEditor value={content} onChange={setContent} />
       </div>
 
       <div className="flex items-center justify-end border-t border-slate-100 px-8 py-5">
         <button
           type="submit"
-          className="rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-hover"
+          disabled={saveRule.isPending}
+          className="rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-hover disabled:opacity-50"
         >
-          Save Changes
+          {saveRule.isPending ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
     </form>
