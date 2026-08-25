@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import {
-  Bell,
   CheckCircle2,
   Heart,
   Send,
   Timer,
-  User,
   UserPlus,
   Users as UsersIcon,
 } from 'lucide-react'
@@ -16,33 +14,6 @@ import {
   useFocusTimeTogetherOverTime,
   useRecentActivity,
 } from '../../hooks/useSocial'
-
-const socialKeyStats = [
-  {
-    icon: UsersIcon,
-    title: 'Partner Adoption Rate',
-    subtitle: '% of users with at least one partner',
-    value: '64.7%',
-  },
-  {
-    icon: User,
-    title: 'Average Partners Per User',
-    subtitle: '',
-    value: '1.62',
-  },
-  {
-    icon: Bell,
-    title: 'Join-From-Notification Rate',
-    subtitle: '% of notifications that led to a join',
-    value: '38.9%',
-  },
-  {
-    icon: CheckCircle2,
-    title: 'Joint Session Completion Rate',
-    subtitle: '% of joined sessions completed',
-    value: '56.3%',
-  },
-]
 
 export default function Social() {
   const [selectedYear, setSelectedYear] = useState<number>(2026)
@@ -124,41 +95,17 @@ export default function Social() {
         ))}
       </section>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <FocusTimeChart
-            title="Focus Time Together Over Time"
-            data={chartData}
-            seriesLabel="Focus Time Together (Minutes)"
-            isLoading={isChartLoading}
-            selectedDays={selectedDays}
-            onDaysChange={setSelectedDays}
-            selectedYear={selectedYear}
-            onYearChange={setSelectedYear}
-          />
-        </div>
-
-        <div className="lg:col-span-2">
-          <div className="flex h-full flex-col rounded-2xl border border-surface-border bg-surface-card p-5">
-            <h3 className="text-base font-semibold text-white">Key Social Stats</h3>
-            <div className="mt-5 flex flex-1 flex-col gap-5">
-              {socialKeyStats.map((s) => (
-                <div key={s.title} className="flex items-center gap-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-brand/15 text-brand">
-                    <s.icon size={18} />
-                  </span>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-white">{s.title}</div>
-                    {s.subtitle && (
-                      <div className="text-xs text-gray-500">{s.subtitle}</div>
-                    )}
-                  </div>
-                  <div className="text-xl font-semibold text-white">{s.value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+      <section className="w-full">
+        <FocusTimeChart
+          title="Focus Time Together Over Time"
+          data={chartData}
+          seriesLabel="Focus Time Together (Minutes)"
+          isLoading={isChartLoading}
+          selectedDays={selectedDays}
+          onDaysChange={setSelectedDays}
+          selectedYear={selectedYear}
+          onYearChange={setSelectedYear}
+        />
       </section>
 
       <section className="rounded-2xl border border-surface-border bg-surface-card p-5">
