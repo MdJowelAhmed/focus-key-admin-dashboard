@@ -1,34 +1,51 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
-import { Plus, Search, Trash2, Upload, X } from 'lucide-react'
-
-type Device = {
-  id: string
-  serialNo: string
-  uidName: string
-}
-
-const initialDevices: Device[] = [
-  { id: 'dev-1', serialNo: 'SN-100001', uidName: 'UID-AX-001' },
-  { id: 'dev-2', serialNo: 'SN-100002', uidName: 'UID-AX-002' },
-  { id: 'dev-3', serialNo: 'SN-100003', uidName: 'UID-AX-003' },
-  { id: 'dev-4', serialNo: 'SN-100004', uidName: 'UID-AX-004' },
-  { id: 'dev-5', serialNo: 'SN-100005', uidName: 'UID-AX-005' },
-]
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { Edit2, Plus, Trash2, Upload, X } from 'lucide-react'
+import { Popconfirm, message } from 'antd'
+import { SearchingInput, Pagination } from '../../components/share'
+import {
+  useCreateDevice,
+  useDeleteDevice,
+  useDevices,
+  useUpdateDevice,
+} from '../../hooks/useDevices'
+import type { DeviceItem } from '../../types/devices'
 
 export default function Devices() {
-  const [devices, setDevices] = useState<Device[]>(initialDevices)
-  const [search, setSearch] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const search = searchParams.get('search') || ''
+  const page = parseInt(searchParams.get('page') || '1', 10)
+  const limit = 10
+
+  const { data: devicesResponse, isLoading } = useDevices({
+    page,
+    limit,
+    searchTerm: search,
+  })
+
+  const createDevice = useCreateDevice()
+  const updateDevice = useUpdateDevice()
+  const deleteDevice = useDeleteDevice()
+
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [uploadInfo, setUploadInfo] = useState<string | null>(null)
-  const [showAddModal, setShowAddModal] = useState(false)
-  const [newUid, setNewUid] = useState('')
+
+  // Modal State
+  const [showModal, setShowModal] = useState(false)
+  const [editingDevice, setEditingDevice] = useState<DeviceItem | null>(null)
+  const [uidInput, setUidInput] = useState('')
+  const [notesInput, setNotesInput] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const devicesList = devicesResponse?.data?.data || []
+  const meta = devicesResponse?.data?.meta
+
   useEffect(() => {
-    if (!showAddModal) return
+    if (!showModal) return
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeAddModal()
+      if (event.key === 'Escape') closeModal()
     }
     document.addEventListener('keydown', handleKey)
     const prevOverflow = document.body.style.overflow
@@ -37,23 +54,78 @@ export default function Devices() {
       document.removeEventListener('keydown', handleKey)
       document.body.style.overflow = prevOverflow
     }
-  }, [showAddModal])
+  }, [showModal])
 
-  const closeAddModal = () => {
-    setShowAddModal(false)
-    setNewUid('')
+  const openAddModal = () => {
+    setEditingDevice(null)
+    setUidInput('')
+    setNotesInput('')
+    setFormError(null)
+    setShowModal(true)
+  }
+
+  const openEditModal = (device: DeviceItem) => {
+    setEditingDevice(device)
+    setUidInput(device.uid || '')
+    setNotesInput(device.notes || '')
+    setFormError(null)
+    setShowModal(true)
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setEditingDevice(null)
+    setUidInput('')
+    setNotesInput('')
     setFormError(null)
   }
 
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase()
-    if (!term) return devices
-    return devices.filter(
-      (d) =>
-        d.serialNo.toLowerCase().includes(term) ||
-        d.uidName.toLowerCase().includes(term),
-    )
-  }, [search, devices])
+  const handleSearchChange = (newSearch: string) => {
+    const newParams = new URLSearchParams(searchParams)
+    if (newSearch.trim()) {
+      newParams.set('search', newSearch.trim())
+    } else {
+      newParams.delete('search')
+    }
+    newParams.set('page', '1')
+    setSearchParams(newParams)
+  }
+
+  const handlePageChange = (newPage: number) => {
+    const newParams = new URLSearchParams(searchParams)
+    newParams.set('page', String(newPage))
+    setSearchParams(newParams)
+  }
+
+  const handleSubmitForm = async () => {
+    const uid = uidInput.trim()
+    const notes = notesInput.trim()
+
+    if (!uid) {
+      setFormError('UID is required.')
+      return
+    }
+
+    if (editingDevice) {
+      updateDevice.mutate(
+        { id: editingDevice._id, payload: { uid, notes } },
+        {
+          onSuccess: () => {
+            closeModal()
+          },
+        }
+      )
+    } else {
+      createDevice.mutate(
+        { uid, notes },
+        {
+          onSuccess: () => {
+            closeModal()
+          },
+        }
+      )
+    }
+  }
 
   const handleUploadClick = () => {
     setUploadError(null)
@@ -79,76 +151,45 @@ export default function Devices() {
       }
 
       const startsWithHeader =
-        rows[0][0]?.trim().toLowerCase() === 'serial no' &&
-        rows[0][1]?.trim().toLowerCase() === 'uid name'
+        rows[0][0]?.trim().toLowerCase().includes('uid') ||
+        rows[0][0]?.trim().toLowerCase().includes('serial')
       const dataRows = startsWithHeader ? rows.slice(1) : rows
 
-      const parsed: Device[] = []
-      dataRows.forEach((row, idx) => {
-        const serialNo = (row[0] ?? '').trim()
-        const uidName = (row[1] ?? '').trim()
-        if (!serialNo && !uidName) return
-        parsed.push({
-          id: `csv-${Date.now()}-${idx}`,
-          serialNo,
-          uidName,
-        })
-      })
+      let successCount = 0
+      for (const row of dataRows) {
+        const uid = (row[0] ?? '').trim()
+        const notes = (row[1] ?? '').trim()
+        if (!uid) continue
 
-      if (parsed.length === 0) {
-        setUploadError('No valid rows found in the CSV.')
-        return
+        try {
+          await createDevice.mutateAsync({ uid, notes })
+          successCount++
+        } catch {
+          // continue with remaining rows
+        }
       }
 
-      setDevices((prev) => [...parsed, ...prev])
-      setUploadInfo(`${parsed.length} device${parsed.length === 1 ? '' : 's'} added from CSV.`)
+      if (successCount > 0) {
+        setUploadInfo(`${successCount} device(s) uploaded successfully.`)
+      } else {
+        setUploadError('No valid devices were uploaded.')
+      }
     } catch (err) {
       setUploadError('Failed to read CSV file.')
       console.error(err)
     }
   }
 
-  const handleAddDevice = () => {
-    const uid = newUid.trim()
-    if (!uid) {
-      setFormError('UID Name is required.')
-      return
-    }
-    const duplicate = devices.some(
-      (d) => d.uidName.toLowerCase() === uid.toLowerCase(),
-    )
-    if (duplicate) {
-      setFormError('A device with this UID Name already exists.')
-      return
-    }
-    setDevices((prev) => [
-      { id: `dev-${Date.now()}`, serialNo: 'Pending…', uidName: uid },
-      ...prev,
-    ])
-    closeAddModal()
-  }
-
-  const handleDelete = (id: string) => {
-    setDevices((prev) => prev.filter((d) => d.id !== id))
-  }
-
   return (
     <div className="flex flex-col gap-6 pb-6">
       <section className="rounded-2xl border border-surface-border bg-surface-card p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="relative w-full max-w-md">
-            <Search
-              size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-            />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by serial no or UID name..."
-              className="h-10 w-full rounded-full border border-surface-border bg-surface-elevated/70 pl-9 pr-3 text-sm text-white placeholder:text-gray-500 focus:border-brand focus:outline-none"
-            />
-          </div>
+          <SearchingInput
+            value={search}
+            onChange={handleSearchChange}
+            placeholder="Search by serial no or UID..."
+            className="w-full max-w-md"
+          />
 
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -161,7 +202,7 @@ export default function Devices() {
             </button>
             <button
               type="button"
-              onClick={() => setShowAddModal(true)}
+              onClick={openAddModal}
               className="flex h-10 items-center gap-2 rounded-md bg-gradient-to-r from-brand to-brand-hover px-4 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
             >
               <Plus size={16} />
@@ -190,73 +231,162 @@ export default function Devices() {
         )}
 
         <div className="mt-5 overflow-x-auto">
-          <table className="w-full min-w-[480px] text-sm">
+          <table className="w-full min-w-[700px] text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-500">
+              <tr className="text-left text-xs text-gray-400">
                 <th className="border-b border-surface-border pb-3 pl-1 font-medium">Serial No</th>
-                <th className="border-b border-surface-border pb-3 font-medium">UID Name</th>
-                <th className="w-20 border-b border-surface-border pb-3 pr-1 text-right font-medium">
-                  Action
+                <th className="border-b border-surface-border pb-3 font-medium">UID</th>
+                <th className="border-b border-surface-border pb-3 font-medium">User</th>
+                <th className="border-b border-surface-border pb-3 font-medium">Platform / Model</th>
+                <th className="border-b border-surface-border pb-3 font-medium">Status</th>
+                <th className="border-b border-surface-border pb-3 font-medium">Notes</th>
+                <th className="border-b border-surface-border pb-3 pr-1 text-right font-medium">
+                  Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border">
-              {filtered.map((device) => (
-                <tr key={device.id} className="text-gray-200">
-                  <td className="py-3 pl-1 font-medium text-white">{device.serialNo}</td>
-                  <td className="py-3 text-gray-300">{device.uidName}</td>
-                  <td className="py-3 pr-1 text-right">
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(device.id)}
-                      aria-label={`Delete ${device.serialNo}`}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-accent-danger/15 hover:text-accent-danger"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
+              {isLoading ? (
                 <tr>
-                  <td colSpan={3} className="py-8 text-center text-sm text-gray-500">
-                    No devices found.
+                  <td colSpan={7} className="py-8 text-center text-sm text-gray-400">
+                    Loading devices...
                   </td>
                 </tr>
+              ) : devicesList.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-sm text-gray-400">
+                    No devices found matching criteria.
+                  </td>
+                </tr>
+              ) : (
+                devicesList.map((device) => (
+                  <tr key={device._id} className="text-gray-200 hover:bg-surface-elevated/30">
+                    <td className="py-3 pl-1 font-medium text-white">{device.serialNo || 'N/A'}</td>
+                    <td className="py-3 text-gray-300 font-mono text-xs">{device.uid}</td>
+                    <td className="py-3">
+                      {device.userId ? (
+                        <div className="flex items-center gap-2">
+                          {device.userId.profileImage ? (
+                            <img
+                              src={device.userId.profileImage}
+                              alt={device.userId.name}
+                              className="h-6 w-6 rounded-full object-cover"
+                            />
+                          ) : (
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand/30 text-[10px] font-semibold text-brand-ring">
+                              {device.userId.name ? device.userId.name[0].toUpperCase() : 'U'}
+                            </span>
+                          )}
+                          <div className="text-xs">
+                            <div className="font-medium text-white">{device.userId.name}</div>
+                            <div className="text-gray-400">{device.userId.email}</div>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-500">Unpaired</span>
+                      )}
+                    </td>
+                    <td className="py-3 text-xs text-gray-300">
+                      {device.platform || device.deviceModel ? (
+                        <span>
+                          <span className="capitalize">{device.platform || 'N/A'}</span>
+                          {device.deviceModel && (
+                            <span className="text-gray-400"> ({device.deviceModel})</span>
+                          )}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500">N/A</span>
+                      )}
+                    </td>
+                    <td className="py-3">
+                      <span
+                        className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
+                          device.status === 'ACTIVE'
+                            ? 'bg-accent-pitchSoft/40 text-accent-success border border-accent-success/30'
+                            : 'bg-surface-elevated text-gray-400 border border-surface-border'
+                        }`}
+                      >
+                        {device.status || 'INACTIVE'}
+                      </span>
+                    </td>
+                    <td className="py-3 text-xs text-gray-300 max-w-[200px] truncate">
+                      {device.notes || <span className="text-gray-500">-</span>}
+                    </td>
+                    <td className="py-3 pr-1 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(device)}
+                          aria-label={`Edit ${device.serialNo}`}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-brand/15 hover:text-brand"
+                        >
+                          <Edit2 size={15} />
+                        </button>
+
+                        <Popconfirm
+                          title="Delete Device"
+                          description="Are you sure you want to delete this device?"
+                          onConfirm={() => deleteDevice.mutate(device._id)}
+                          okText="Yes, Delete"
+                          cancelText="Cancel"
+                          okButtonProps={{ danger: true }}
+                        >
+                          <button
+                            type="button"
+                            disabled={deleteDevice.isPending}
+                            aria-label={`Delete ${device.serialNo}`}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-accent-danger/15 hover:text-accent-danger"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </Popconfirm>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
 
-        <div className="mt-4 text-xs text-gray-500">
-          Showing {filtered.length} of {devices.length} devices
-        </div>
+        {meta && (
+          <Pagination
+            currentPage={meta.page}
+            totalPages={meta.totalPage}
+            totalItems={meta.total}
+            itemsPerPage={limit}
+            onPageChange={handlePageChange}
+          />
+        )}
       </section>
 
-      {showAddModal && (
+      {/* Add / Edit Device Modal */}
+      {showModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
-          onClick={closeAddModal}
+          onClick={closeModal}
         >
           <div
             role="dialog"
             aria-modal="true"
-            aria-labelledby="add-device-title"
+            aria-labelledby="device-modal-title"
             className="w-full max-w-md rounded-2xl border border-surface-border bg-surface-card shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between border-b border-surface-border px-6 py-4">
               <div>
-                <h3 id="add-device-title" className="text-base font-semibold text-white">
-                  Add Device
+                <h3 id="device-modal-title" className="text-base font-semibold text-white">
+                  {editingDevice ? 'Edit Device' : 'Add Device'}
                 </h3>
                 <p className="mt-1 text-xs text-gray-400">
-                  Enter the UID name for this device. The serial number will be generated automatically.
+                  {editingDevice
+                    ? 'Update the UID or notes for this device.'
+                    : 'Enter the UID for this device. The serial number will be generated automatically.'}
                 </p>
               </div>
               <button
                 type="button"
-                onClick={closeAddModal}
+                onClick={closeModal}
                 aria-label="Close"
                 className="text-gray-400 transition-colors hover:text-white"
               >
@@ -267,24 +397,37 @@ export default function Devices() {
             <form
               onSubmit={(event) => {
                 event.preventDefault()
-                handleAddDevice()
+                handleSubmitForm()
               }}
               className="space-y-4 px-6 py-5"
             >
               <label className="block">
                 <span className="block text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  UID Name
+                  UID
                 </span>
                 <input
                   type="text"
-                  value={newUid}
+                  value={uidInput}
                   onChange={(e) => {
-                    setNewUid(e.target.value)
+                    setUidInput(e.target.value)
                     if (formError) setFormError(null)
                   }}
-                  placeholder="e.g. UID-AX-006"
+                  placeholder="e.g. 045A897AD92290"
                   autoFocus
-                  className="mt-2 h-11 w-full rounded-md border border-surface-border bg-surface-elevated px-3 text-sm text-white placeholder:text-gray-500 focus:border-brand focus:outline-none"
+                  className="mt-2 h-11 w-full rounded-md border border-surface-border bg-surface-elevated px-3 text-sm font-mono text-white placeholder:text-gray-500 focus:border-brand focus:outline-none"
+                />
+              </label>
+
+              <label className="block">
+                <span className="block text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Notes
+                </span>
+                <textarea
+                  value={notesInput}
+                  onChange={(e) => setNotesInput(e.target.value)}
+                  placeholder="Admin notes about this NFC device."
+                  rows={3}
+                  className="mt-2 w-full rounded-md border border-surface-border bg-surface-elevated p-3 text-sm text-white placeholder:text-gray-500 focus:border-brand focus:outline-none"
                 />
               </label>
 
@@ -297,17 +440,21 @@ export default function Devices() {
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={closeAddModal}
+                  onClick={closeModal}
                   className="h-10 rounded-md border border-surface-border bg-surface-elevated px-4 text-sm text-gray-200 transition-colors hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={!newUid.trim()}
+                  disabled={!uidInput.trim() || createDevice.isPending || updateDevice.isPending}
                   className="h-10 rounded-md bg-gradient-to-r from-brand to-brand-hover px-5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Save Device
+                  {createDevice.isPending || updateDevice.isPending
+                    ? 'Saving...'
+                    : editingDevice
+                    ? 'Update Device'
+                    : 'Save Device'}
                 </button>
               </div>
             </form>
