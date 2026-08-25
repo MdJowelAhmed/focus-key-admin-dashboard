@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthLayout from '../../layouts/AuthLayout'
 import AuthCard from '../../components/auth/AuthCard'
-import AuthIllustration from '../../components/auth/AuthIllustration'
 import FormField from '../../components/auth/FormField'
 import PasswordField from '../../components/auth/PasswordField'
 import PrimaryButton from '../../components/auth/PrimaryButton'
@@ -29,9 +28,7 @@ export default function Login() {
   }
 
   return (
-    <AuthLayout
-      illustration={<AuthIllustration alt="User login illustration" />}
-    >
+    <AuthLayout>
       <AuthCard description="Welcome back! Please enter your details.">
         {error && (
           <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600 border border-red-200">

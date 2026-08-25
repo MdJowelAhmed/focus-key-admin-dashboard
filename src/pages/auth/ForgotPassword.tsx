@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthLayout from '../../layouts/AuthLayout'
 import AuthCard from '../../components/auth/AuthCard'
-import AuthIllustration from '../../components/auth/AuthIllustration'
 import FormField from '../../components/auth/FormField'
 import PrimaryButton from '../../components/auth/PrimaryButton'
 import BackToLoginLink from '../../components/auth/BackToLoginLink'
@@ -28,9 +27,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <AuthLayout
-      illustration={<AuthIllustration alt="Forgot password illustration" />}
-    >
+    <AuthLayout>
       <AuthCard
         title="Forgot password?"
         description="No worries, we'll send you reset instructions."

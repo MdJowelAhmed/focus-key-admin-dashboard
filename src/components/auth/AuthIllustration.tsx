@@ -3,24 +3,14 @@ type Props = {
   alt: string
 }
 
-export default function AuthIllustration({ src, alt }: Props) {
-  if (src) {
-    return (
+export default function AuthIllustration({ src = '/auth_illustration.jpg', alt }: Props) {
+  return (
+    <div className="relative flex w-full max-w-[560px] items-center justify-center overflow-hidden rounded-3xl border border-surface-border/50 bg-surface-card/40 p-3 shadow-2xl backdrop-blur-md">
       <img
         src={src}
         alt={alt}
-        className="max-h-[560px] w-full max-w-[640px] object-contain"
+        className="h-auto max-h-[480px] w-full rounded-2xl object-cover shadow-lg transition-transform duration-500 hover:scale-[1.01]"
       />
-    )
-  }
-
-  return (
-    <div
-      role="img"
-      aria-label={alt}
-      className="flex h-[420px] w-full max-w-[560px] items-center justify-center rounded-3xl border border-dashed border-surface-border text-sm text-gray-500"
-    >
-      {alt}
     </div>
   )
 }

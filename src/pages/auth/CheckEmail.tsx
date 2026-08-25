@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, type FormEvent, type ChangeEvent, type Key
 import { useLocation, useNavigate } from 'react-router-dom'
 import AuthLayout from '../../layouts/AuthLayout'
 import AuthCard from '../../components/auth/AuthCard'
-import AuthIllustration from '../../components/auth/AuthIllustration'
 import PrimaryButton from '../../components/auth/PrimaryButton'
 import BackToLoginLink from '../../components/auth/BackToLoginLink'
 import { useVerifyEmailMutation, useResendOtpMutation } from '../../hooks/useAuthMutations'
@@ -102,9 +101,7 @@ export default function CheckEmail() {
   }
 
   return (
-    <AuthLayout
-      illustration={<AuthIllustration alt="Check email illustration" />}
-    >
+    <AuthLayout>
       <AuthCard
         title="Check your email"
         description={

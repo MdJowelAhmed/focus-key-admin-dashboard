@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthLayout from '../../layouts/AuthLayout'
 import AuthCard from '../../components/auth/AuthCard'
-import AuthIllustration from '../../components/auth/AuthIllustration'
 import PasswordField from '../../components/auth/PasswordField'
 import PrimaryButton from '../../components/auth/PrimaryButton'
 import BackToLoginLink from '../../components/auth/BackToLoginLink'
@@ -44,9 +43,7 @@ export default function SetNewPassword() {
   }
 
   return (
-    <AuthLayout
-      illustration={<AuthIllustration alt="Reset password illustration" />}
-    >
+    <AuthLayout>
       <AuthCard
         title="Set new password"
         description="Your new password must be different to previously used passwords."
