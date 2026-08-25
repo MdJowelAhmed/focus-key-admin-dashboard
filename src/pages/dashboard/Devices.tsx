@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Edit2, Plus, Trash2, Upload, X } from 'lucide-react'
 import { Popconfirm } from 'antd'
 import { SearchingInput, Pagination } from '../../components/share'
+import { imageUrl } from '../../components/share/getImageUrl'
 import {
   useCreateDevice,
   useDeleteDevice,
@@ -268,7 +269,7 @@ export default function Devices() {
                         <div className="flex items-center gap-2">
                           {device.userId.profileImage ? (
                             <img
-                              src={device.userId.profileImage}
+                              src={imageUrl(device.userId.profileImage)}
                               alt={device.userId.name}
                               className="h-6 w-6 rounded-full object-cover"
                             />

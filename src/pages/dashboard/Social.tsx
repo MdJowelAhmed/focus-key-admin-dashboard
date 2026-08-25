@@ -14,6 +14,7 @@ import {
   useFocusTimeTogetherOverTime,
   useRecentActivity,
 } from '../../hooks/useSocial'
+import { imageUrl } from '../../components/share/getImageUrl'
 
 export default function Social() {
   const [selectedYear, setSelectedYear] = useState<number>(2026)
@@ -137,7 +138,7 @@ export default function Social() {
                         <div className="flex items-center gap-3">
                           {row.user?.profileImage ? (
                             <img
-                              src={row.user.profileImage}
+                              src={imageUrl(row.user.profileImage)}
                               alt={row.user.name}
                               className="h-8 w-8 rounded-full object-cover"
                             />

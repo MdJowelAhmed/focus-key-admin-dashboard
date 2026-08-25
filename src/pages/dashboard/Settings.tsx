@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import {
   Camera,
   Eye,
@@ -10,7 +10,14 @@ import {
   User,
   type LucideIcon,
 } from 'lucide-react'
+import { message } from 'antd'
 import RichTextEditor from '../../components/dashboard/settings/RichTextEditor'
+import { imageUrl } from '../../components/share/getImageUrl'
+import {
+  useChangePassword,
+  useGetProfile,
+  useUpdateProfile,
+} from '../../hooks/useProfile'
 
 type TabKey = 'profile' | 'password' | 'about' | 'privacy' | 'terms'
 
@@ -28,14 +35,6 @@ const tabs: Tab[] = [
   { key: 'terms', label: 'Terms of Service', icon: FileText },
 ]
 
-const initialProfile = {
-  firstName: 'Super',
-  lastName: 'Admin',
-  email: 'admin@goodniva.com',
-  role: 'Global Access',
-  avatarUrl: '',
-}
-
 const initialAbout =
   '<h2>About Focus Key</h2><p>Focus Key helps teams build healthier digital habits through gentle accountability and shared focus sessions.</p>'
 
@@ -47,7 +46,6 @@ const initialTerms =
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState<TabKey>('profile')
-  const [profile, setProfile] = useState(initialProfile)
   const [aboutHtml, setAboutHtml] = useState(initialAbout)
   const [privacyHtml, setPrivacyHtml] = useState(initialPrivacy)
   const [termsHtml, setTermsHtml] = useState(initialTerms)
@@ -86,9 +84,7 @@ export default function Settings() {
         </aside>
 
         <section className="flex-1 rounded-2xl border border-slate-200 bg-white shadow-sm">
-          {activeTab === 'profile' && (
-            <ProfileTab profile={profile} setProfile={setProfile} />
-          )}
+          {activeTab === 'profile' && <ProfileTab />}
           {activeTab === 'password' && <PasswordTab />}
           {activeTab === 'about' && (
             <EditorTab
@@ -120,34 +116,61 @@ export default function Settings() {
   )
 }
 
-type ProfileTabProps = {
-  profile: typeof initialProfile
-  setProfile: (next: typeof initialProfile) => void
-}
+function ProfileTab() {
+  const { data: profileUser, isLoading } = useGetProfile()
+  const updateProfile = useUpdateProfile()
 
-function ProfileTab({ profile, setProfile }: ProfileTabProps) {
-  const handleField = (key: keyof typeof initialProfile) => (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
-    setProfile({ ...profile, [key]: event.target.value })
-  }
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [avatarPreview, setAvatarPreview] = useState<string>('')
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
 
-  const handleAvatar = (event: ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (profileUser) {
+      setName(profileUser.name || '')
+      setEmail(profileUser.email || '')
+      if (profileUser.profileImage) {
+        setAvatarPreview(profileUser.profileImage)
+      }
+    }
+  }, [profileUser])
+
+  const handleAvatarChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
+    setAvatarFile(file)
     const reader = new FileReader()
     reader.onload = () => {
-      setProfile({ ...profile, avatarUrl: String(reader.result ?? '') })
+      setAvatarPreview(String(reader.result ?? ''))
     }
     reader.readAsDataURL(file)
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    updateProfile.mutate({
+      data: { name, email },
+      file: avatarFile,
+    })
   }
 
-  const initials =
-    `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}`.toUpperCase() || 'A'
+  if (isLoading) {
+    return (
+      <div className="p-8 text-center text-sm text-slate-500">
+        Loading profile...
+      </div>
+    )
+  }
+
+  const initials = name
+    ? name
+        .split(' ')
+        .filter(Boolean)
+        .map((part) => part[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase()
+    : 'U'
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col">
@@ -161,10 +184,10 @@ function ProfileTab({ profile, setProfile }: ProfileTabProps) {
       <div className="px-8 py-7">
         <div className="flex items-center gap-5">
           <label className="group relative h-20 w-20 cursor-pointer overflow-hidden rounded-full bg-gradient-to-br from-brand to-brand-hover ring-4 ring-brand/20">
-            {profile.avatarUrl ? (
+            {avatarPreview ? (
               <img
-                src={profile.avatarUrl}
-                alt={`${profile.firstName} ${profile.lastName}`}
+                src={imageUrl(avatarPreview)}
+                alt={name || 'Profile'}
                 className="h-full w-full object-cover"
               />
             ) : (
@@ -178,16 +201,14 @@ function ProfileTab({ profile, setProfile }: ProfileTabProps) {
             <input
               type="file"
               accept="image/*"
-              onChange={handleAvatar}
+              onChange={handleAvatarChange}
               className="hidden"
             />
           </label>
 
           <div>
-            <div className="text-base font-bold text-slate-900">
-              {profile.firstName} {profile.lastName}
-            </div>
-            <div className="text-sm text-slate-500">{profile.role}</div>
+            <div className="text-base font-bold text-slate-900">{name || 'Admin User'}</div>
+            <div className="text-sm text-slate-500">{profileUser?.role || 'SUPER_ADMIN'}</div>
             <div className="mt-1 text-xs text-slate-400">
               Click the camera icon to upload a new photo
             </div>
@@ -196,30 +217,22 @@ function ProfileTab({ profile, setProfile }: ProfileTabProps) {
 
         <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
           <Field
-            label="First Name"
-            value={profile.firstName}
-            onChange={handleField('firstName')}
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
-          <Field
-            label="Last Name"
-            value={profile.lastName}
-            onChange={handleField('lastName')}
-          />
-        </div>
-
-        <div className="mt-5">
           <Field
             label="Email Address"
             type="email"
-            value={profile.email}
-            onChange={handleField('email')}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
 
         <div className="mt-5">
           <label className="block text-sm font-semibold text-slate-700">Role</label>
           <div className="mt-2 flex items-center gap-2 rounded-full bg-slate-100 px-5 py-3 text-sm text-slate-700">
-            <span className="font-medium">{profile.role}</span>
+            <span className="font-medium">{profileUser?.role || 'SUPER_ADMIN'}</span>
             <span className="text-slate-400">(Read-only)</span>
           </div>
         </div>
@@ -228,9 +241,10 @@ function ProfileTab({ profile, setProfile }: ProfileTabProps) {
       <div className="flex items-center justify-end border-t border-slate-100 px-8 py-5">
         <button
           type="submit"
-          className="rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-hover"
+          disabled={updateProfile.isPending}
+          className="rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-hover disabled:opacity-50"
         >
-          Save Changes
+          {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
     </form>
@@ -238,15 +252,37 @@ function ProfileTab({ profile, setProfile }: ProfileTabProps) {
 }
 
 function PasswordTab() {
-  const [current, setCurrent] = useState('')
-  const [next, setNext] = useState('')
-  const [confirm, setConfirm] = useState('')
+  const changePassword = useChangePassword()
+
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNext, setShowNext] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      message.error('Please fill in all password fields')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      message.error('New password and confirm password do not match')
+      return
+    }
+
+    changePassword.mutate(
+      { currentPassword, newPassword, confirmPassword },
+      {
+        onSuccess: () => {
+          setCurrentPassword('')
+          setNewPassword('')
+          setConfirmPassword('')
+        },
+      }
+    )
   }
 
   return (
@@ -261,22 +297,22 @@ function PasswordTab() {
       <div className="space-y-5 px-8 py-7">
         <PasswordField
           label="Current Password"
-          value={current}
-          onChange={(event) => setCurrent(event.target.value)}
+          value={currentPassword}
+          onChange={(event) => setCurrentPassword(event.target.value)}
           visible={showCurrent}
           onToggle={() => setShowCurrent((v) => !v)}
         />
         <PasswordField
           label="New Password"
-          value={next}
-          onChange={(event) => setNext(event.target.value)}
+          value={newPassword}
+          onChange={(event) => setNewPassword(event.target.value)}
           visible={showNext}
           onToggle={() => setShowNext((v) => !v)}
         />
         <PasswordField
           label="Confirm New Password"
-          value={confirm}
-          onChange={(event) => setConfirm(event.target.value)}
+          value={confirmPassword}
+          onChange={(event) => setConfirmPassword(event.target.value)}
           visible={showConfirm}
           onToggle={() => setShowConfirm((v) => !v)}
         />
@@ -285,9 +321,10 @@ function PasswordTab() {
       <div className="flex items-center justify-end border-t border-slate-100 px-8 py-5">
         <button
           type="submit"
-          className="rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-hover"
+          disabled={changePassword.isPending}
+          className="rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-hover disabled:opacity-50"
         >
-          Update Password
+          {changePassword.isPending ? 'Updating...' : 'Update Password'}
         </button>
       </div>
     </form>

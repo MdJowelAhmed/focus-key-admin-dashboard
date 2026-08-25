@@ -4,9 +4,6 @@ const API_BASE_URL = import.meta.env.VITE_BASE_URL || 'http://10.10.7.10:5002/ap
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 })
 
 // Request interceptor to attach Bearer token if present in localStorage

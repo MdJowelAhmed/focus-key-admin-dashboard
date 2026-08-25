@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { Building2, Cpu, HelpCircle, LogOut, MessageCircle, Settings, Users, type LucideIcon } from 'lucide-react'
 import PresentKeyLogo from '../auth/Logo'
+import { imageUrl } from '../share/getImageUrl'
 
 type NavItem = {
   label: string
@@ -58,7 +59,7 @@ export default function Sidebar({ user, onLogout }: Props) {
           <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand/30 text-sm font-semibold text-brand-ring">
             {user.avatarUrl ? (
               <img
-                src={user.avatarUrl}
+                src={imageUrl(user.avatarUrl)}
                 alt={user.name}
                 className="h-full w-full object-cover"
               />

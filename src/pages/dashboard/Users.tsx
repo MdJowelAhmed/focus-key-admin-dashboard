@@ -5,6 +5,7 @@ import DeltaStatCard from '../../components/dashboard/DeltaStatCard'
 import { useAnalyticsStats } from '../../hooks/useAnalytics'
 import { useDeleteUser, useUpdateUserStatus, useUsersAnalytics } from '../../hooks/useUsers'
 import { Filtering, Pagination, SearchingInput } from '../../components/share'
+import { imageUrl } from '../../components/share/getImageUrl'
 
 export default function Users() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -184,7 +185,7 @@ export default function Users() {
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand/30 text-xs font-semibold text-brand-ring">
                           {user.profileImage ? (
                             <img
-                              src={user.profileImage}
+                              src={imageUrl(user.profileImage)}
                               alt={user.name}
                               className="h-full w-full object-cover"
                             />
