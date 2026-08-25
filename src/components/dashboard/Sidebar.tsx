@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Building2, Cpu, LogOut, MessageCircle, Settings, Users, type LucideIcon } from 'lucide-react'
+import { Building2, Cpu, HelpCircle, LogOut, MessageCircle, Settings, Users, type LucideIcon } from 'lucide-react'
 import PresentKeyLogo from '../auth/Logo'
 
 type NavItem = {
@@ -13,6 +13,7 @@ const navItems: NavItem[] = [
   { label: 'Users', to: '/dashboard/users', icon: Users },
   { label: 'Social', to: '/dashboard/social', icon: MessageCircle },
   { label: 'Devices', to: '/dashboard/devices', icon: Cpu },
+  { label: 'FAQ', to: '/dashboard/faqs', icon: HelpCircle },
   { label: 'Settings', to: '/dashboard/settings', icon: Settings },
 ]
 
