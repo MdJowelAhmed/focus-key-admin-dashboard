@@ -43,3 +43,34 @@ export interface LoginApiResponse {
   message: string
   data: LoginResponseData
 }
+
+export interface ForgotPasswordPayload {
+  email: string
+}
+
+export interface VerifyEmailPayload {
+  email: string
+  oneTimeCode: number
+}
+
+export interface VerifyEmailResponse {
+  success: boolean
+  message: string
+  data: string
+}
+
+export interface ResendOtpPayload {
+  email: string
+}
+
+export interface ResetPasswordPayload {
+  newPassword: string
+  confirmPassword: string
+}
+
+export interface AuthApiResponse {
+  success: boolean
+  message: string
+  data?: unknown
+}
+

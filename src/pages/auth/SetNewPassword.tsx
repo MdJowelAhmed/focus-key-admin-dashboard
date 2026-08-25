@@ -6,14 +6,17 @@ import AuthIllustration from '../../components/auth/AuthIllustration'
 import PasswordField from '../../components/auth/PasswordField'
 import PrimaryButton from '../../components/auth/PrimaryButton'
 import BackToLoginLink from '../../components/auth/BackToLoginLink'
+import { useResetPasswordMutation } from '../../hooks/useAuthMutations'
 
-const MIN_LENGTH = 8
+const MIN_LENGTH = 6
 
 export default function SetNewPassword() {
   const navigate = useNavigate()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  const resetPasswordMutation = useResetPasswordMutation()
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -26,7 +29,18 @@ export default function SetNewPassword() {
       return
     }
     setError(null)
-    navigate('/password-reset-success')
+
+    resetPasswordMutation.mutate(
+      {
+        newPassword: password,
+        confirmPassword: confirm,
+      },
+      {
+        onSuccess: () => {
+          navigate('/password-reset-success')
+        },
+      }
+    )
   }
 
   return (
@@ -40,19 +54,21 @@ export default function SetNewPassword() {
       >
         <form onSubmit={onSubmit} className="space-y-5">
           <PasswordField
-            label="Password"
-            name="password"
+            label="New Password"
+            name="newPassword"
             autoComplete="new-password"
             value={password}
             onChange={setPassword}
             hint={`Must be at least ${MIN_LENGTH} characters.`}
+            required
           />
           <PasswordField
-            label="Confirm password"
-            name="confirm-password"
+            label="Confirm Password"
+            name="confirmPassword"
             autoComplete="new-password"
             value={confirm}
             onChange={setConfirm}
+            required
           />
 
           {error && (
@@ -61,7 +77,12 @@ export default function SetNewPassword() {
             </p>
           )}
 
-          <PrimaryButton type="submit">Reset password</PrimaryButton>
+          <PrimaryButton
+            type="submit"
+            disabled={resetPasswordMutation.isPending}
+          >
+            {resetPasswordMutation.isPending ? 'Resetting...' : 'Reset password'}
+          </PrimaryButton>
         </form>
         <BackToLoginLink />
       </AuthCard>
