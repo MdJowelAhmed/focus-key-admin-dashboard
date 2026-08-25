@@ -68,3 +68,59 @@ export interface UserAnalyticsResponse {
 export interface UpdateUserStatusPayload {
   status: 'ACTIVE' | 'INACTIVE' | string
 }
+
+// Social Analytics Types
+export interface EngagementStats {
+  usersWithPartners: number
+  partnerRequestsAccepted: number
+  nudgesSent: number
+  jointSessions: number
+}
+
+export interface EngagementStatsResponse {
+  success: boolean
+  message: string
+  data: EngagementStats
+}
+
+export interface FocusTimeTogetherItem {
+  date: string
+  focusMinutes: number
+}
+
+export interface FocusTimeTogetherData {
+  year: number
+  days: number
+  focusTimeTogetherOverTime: FocusTimeTogetherItem[]
+}
+
+export interface FocusTimeTogetherResponse {
+  success: boolean
+  message: string
+  data: FocusTimeTogetherData
+}
+
+export interface FocusTimeTogetherParams {
+  year?: number
+  days?: number
+}
+
+export interface RecentActivityUser {
+  name: string
+  email: string
+  profileImage: string | null
+}
+
+export interface RecentActivityItem {
+  user: RecentActivityUser
+  event: string
+  time: string
+  status: string
+}
+
+export interface RecentActivityResponse {
+  success: boolean
+  message: string
+  data: RecentActivityItem[]
+}
+

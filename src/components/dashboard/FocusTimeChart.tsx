@@ -20,49 +20,123 @@ type Props = {
   data: FocusTimeDatum[]
   seriesLabel: string
   isLoading?: boolean
+  selectedDays?: number
+  onDaysChange?: (days: number) => void
+  selectedYear?: number
+  onYearChange?: (year: number) => void
+  yearOptions?: number[]
 }
 
-const RANGES = ['Last 7 Days', 'Last 14 Days', 'Last 30 Days']
+const RANGE_OPTIONS = [
+  { label: 'Last 7 Days', days: 7 },
+  { label: 'Last 14 Days', days: 14 },
+  { label: 'Last 30 Days', days: 30 },
+]
 
-export default function FocusTimeChart({ title, data, seriesLabel, isLoading }: Props) {
-  const [open, setOpen] = useState(false)
-  const [range, setRange] = useState(RANGES[0])
+export default function FocusTimeChart({
+  title,
+  data,
+  seriesLabel,
+  isLoading,
+  selectedDays,
+  onDaysChange,
+  selectedYear,
+  onYearChange,
+  yearOptions = [2026, 2025, 2024],
+}: Props) {
+  const [openDays, setOpenDays] = useState(false)
+  const [openYear, setOpenYear] = useState(false)
+  const [internalDays, setInternalDays] = useState(7)
+
+  const activeDays = selectedDays ?? internalDays
+  const activeDaysLabel = RANGE_OPTIONS.find((r) => r.days === activeDays)?.label || `Last ${activeDays} Days`
+
+  const handleSelectDays = (days: number) => {
+    if (onDaysChange) {
+      onDaysChange(days)
+    } else {
+      setInternalDays(days)
+    }
+    setOpenDays(false)
+  }
 
   return (
     <div className="rounded-2xl border border-surface-border bg-surface-card p-5">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-base font-semibold text-white">{title}</h3>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            className="flex items-center gap-2 rounded-md border border-surface-border bg-surface-elevated px-3 py-1.5 text-xs text-gray-200 hover:text-white"
-          >
-            {range}
-            <ChevronDown size={14} />
-          </button>
-          {open && (
-            <ul className="absolute right-0 z-10 mt-1 w-40 overflow-hidden rounded-md border border-surface-border bg-surface-elevated shadow-lg">
-              {RANGES.map((r) => (
-                <li key={r}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRange(r)
-                      setOpen(false)
-                    }}
-                    className={`block w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-card ${
-                      r === range ? 'text-brand' : 'text-gray-200'
-                    }`}
-                  >
-                    {r}
-                  </button>
-                </li>
-              ))}
-            </ul>
+
+        <div className="flex items-center gap-2">
+          {/* Year Filter (If onYearChange or selectedYear is provided) */}
+          {(selectedYear !== undefined || onYearChange !== undefined) && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenYear((v) => !v)
+                  setOpenDays(false)
+                }}
+                className="flex items-center gap-2 rounded-md border border-surface-border bg-surface-elevated px-3 py-1.5 text-xs text-gray-200 hover:text-white"
+              >
+                {selectedYear ?? 2026}
+                <ChevronDown size={14} />
+              </button>
+              {openYear && (
+                <ul className="absolute right-0 z-10 mt-1 w-28 overflow-hidden rounded-md border border-surface-border bg-surface-elevated shadow-lg">
+                  {yearOptions.map((yr) => (
+                    <li key={yr}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onYearChange?.(yr)
+                          setOpenYear(false)
+                        }}
+                        className={`block w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-card ${
+                          yr === selectedYear ? 'text-brand font-medium' : 'text-gray-200'
+                        }`}
+                      >
+                        {yr}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           )}
+
+          {/* Days Filter */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setOpenDays((v) => !v)
+                setOpenYear(false)
+              }}
+              className="flex items-center gap-2 rounded-md border border-surface-border bg-surface-elevated px-3 py-1.5 text-xs text-gray-200 hover:text-white"
+            >
+              {activeDaysLabel}
+              <ChevronDown size={14} />
+            </button>
+            {openDays && (
+              <ul className="absolute right-0 z-10 mt-1 w-40 overflow-hidden rounded-md border border-surface-border bg-surface-elevated shadow-lg">
+                {RANGE_OPTIONS.map((opt) => (
+                  <li key={opt.days}>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectDays(opt.days)}
+                      className={`block w-full px-3 py-2 text-left text-xs transition-colors hover:bg-surface-card ${
+                        opt.days === activeDays ? 'text-brand font-medium' : 'text-gray-200'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
+
 
       <div className="mt-1 text-xs text-gray-500">Minutes</div>
 
