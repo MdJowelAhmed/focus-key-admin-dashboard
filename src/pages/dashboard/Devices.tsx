@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Edit2, Plus, Trash2, Upload, X } from 'lucide-react'
-import { Popconfirm, message } from 'antd'
+import { Popconfirm } from 'antd'
 import { SearchingInput, Pagination } from '../../components/share'
 import {
   useCreateDevice,
