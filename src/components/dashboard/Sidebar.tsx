@@ -65,13 +65,6 @@ export default function Sidebar({ user, onLogout }: Props) {
             <div className="truncate text-sm font-semibold text-white">{user.name}</div>
             <div className="truncate text-xs text-gray-400">{user.role}</div>
           </div>
-          <button
-            type="button"
-            aria-label="Account menu"
-            className="text-gray-400 transition-colors hover:text-white"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
-          </button>
         </div>
 
         <button
