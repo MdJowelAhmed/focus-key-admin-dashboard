@@ -39,32 +39,27 @@ export default function Social() {
     {
       label: 'Users With Partners',
       value: isStatsLoading ? '...' : formatter.format(engagementStats?.usersWithPartners ?? 0),
-      delta: 'Live',
       icon: UsersIcon,
     },
     {
       label: 'Partner Requests Accepted',
       value: isStatsLoading ? '...' : formatter.format(engagementStats?.partnerRequestsAccepted ?? 0),
-      delta: 'Live',
       icon: UserPlus,
     },
     {
       label: 'Nudges Sent',
       value: isStatsLoading ? '...' : formatter.format(engagementStats?.nudgesSent ?? 0),
-      delta: 'Live',
       icon: Send,
     },
     {
       label: 'Joint Sessions',
       value: isStatsLoading ? '...' : formatter.format(engagementStats?.jointSessions ?? 0),
-      delta: 'Live',
       icon: Heart,
     },
     {
       label: 'Time Focused Together',
       value: isChartLoading ? '...' : formatter.format(totalFocusMinutes),
       valueSuffix: 'mins',
-      delta: 'Live',
       icon: Timer,
     },
   ]
@@ -90,7 +85,6 @@ export default function Social() {
             label={stat.label}
             value={stat.value}
             valueSuffix={stat.valueSuffix}
-            delta={stat.delta}
             icon={stat.icon}
           />
         ))}

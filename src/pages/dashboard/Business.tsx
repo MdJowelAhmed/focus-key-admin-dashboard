@@ -23,25 +23,21 @@ export default function Business() {
     {
       label: 'Total Users',
       value: isStatsLoading ? '...' : formatter.format(stats?.totalUsers ?? 0),
-      delta: 'Live',
       icon: UsersIcon,
     },
     {
       label: 'Activated Users',
       value: isStatsLoading ? '...' : formatter.format(stats?.activatedUsers ?? 0),
-      delta: 'Live',
       icon: UserCheck,
     },
     {
       label: '7-Day Active Users',
       value: isStatsLoading ? '...' : formatter.format(stats?.sevenDayActiveUsers ?? 0),
-      delta: 'Live',
       icon: Activity,
     },
     {
       label: 'Focus Sessions\nThis Week',
       value: isStatsLoading ? '...' : formatter.format(stats?.totalFocusSessionsThisWeek ?? 0),
-      delta: 'Live',
       icon: Clock,
     },
   ]
@@ -92,7 +88,6 @@ export default function Business() {
             key={stat.label}
             label={stat.label}
             value={stat.value}
-            delta={stat.delta}
             icon={stat.icon}
           />
         ))}

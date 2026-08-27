@@ -31,25 +31,21 @@ export default function Users() {
     {
       label: 'Total Users',
       value: isStatsLoading ? '...' : formatter.format(statsData?.totalUsers ?? 0),
-      delta: 'Live',
       icon: UsersIcon,
     },
     {
       label: 'Activated Users',
       value: isStatsLoading ? '...' : formatter.format(statsData?.activatedUsers ?? 0),
-      delta: 'Live',
       icon: UserCheck,
     },
     {
       label: '7-Day Active Users',
       value: isStatsLoading ? '...' : formatter.format(statsData?.sevenDayActiveUsers ?? 0),
-      delta: 'Live',
       icon: Activity,
     },
     {
       label: 'Users With Partners',
       value: isStatsLoading ? '...' : formatter.format(statsData?.usersWithPartners ?? 0),
-      delta: 'Live',
       icon: Nfc,
     },
   ]
@@ -112,7 +108,6 @@ export default function Users() {
             key={s.label}
             label={s.label}
             value={s.value}
-            delta={s.delta}
             icon={s.icon}
           />
         ))}
