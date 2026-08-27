@@ -10,6 +10,7 @@ type Props = {
   placeholder?: string
   autoComplete?: string
   hint?: string
+  required?: boolean
 }
 
 export default function PasswordField({
@@ -20,6 +21,7 @@ export default function PasswordField({
   placeholder,
   autoComplete = 'current-password',
   hint,
+  required,
 }: Props) {
   const [visible, setVisible] = useState(false)
 
@@ -33,6 +35,7 @@ export default function PasswordField({
       placeholder={placeholder}
       autoComplete={autoComplete}
       hint={hint}
+      required={required}
       trailing={
         <button
           type="button"

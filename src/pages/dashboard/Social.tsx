@@ -129,7 +129,6 @@ export default function Social() {
               <tbody className="divide-y divide-surface-border">
                 {recentActivityList.map((row, idx) => {
                   const Icon = getEventIcon(row.event)
-                  const initials = getInitials(row.user?.name)
                   const formattedTime = formatTime(row.time)
 
                   return (
@@ -181,14 +180,7 @@ function getEventIcon(event: string) {
   return UsersIcon
 }
 
-function getInitials(name?: string) {
-  if (!name) return 'U'
-  const parts = name.trim().split(' ').filter(Boolean)
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-  }
-  return name.slice(0, 2).toUpperCase()
-}
+
 
 function formatTime(isoString: string) {
   if (!isoString) return ''
