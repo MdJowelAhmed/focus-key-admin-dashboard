@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { Building2, Cpu, HelpCircle, LogOut, MessageCircle, Settings, Users, type LucideIcon } from 'lucide-react'
 import PresentKeyLogo from '../auth/Logo'
-import { imageUrl } from '../share/getImageUrl'
+import { Avatar } from '../share/Avatar'
 
 type NavItem = {
   label: string
@@ -56,23 +56,11 @@ export default function Sidebar({ user, onLogout }: Props) {
 
       <div className="border-t border-surface-border p-3">
         <div className="flex items-center gap-3 rounded-md px-2 py-2">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand/30 text-sm font-semibold text-brand-ring">
-            {user.avatarUrl ? (
-              <img
-                src={imageUrl(user.avatarUrl)}
-                alt={user.name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span>
-                {user.name
-                  .split(' ')
-                  .map((part) => part.charAt(0))
-                  .slice(0, 2)
-                  .join('')}
-              </span>
-            )}
-          </div>
+          <Avatar
+            src={user.avatarUrl}
+            name={user.name}
+            className="h-10 w-10 bg-brand/30 text-sm font-semibold text-brand-ring"
+          />
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold text-white">{user.name}</div>
             <div className="truncate text-xs text-gray-400">{user.role}</div>

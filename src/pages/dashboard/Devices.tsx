@@ -2,8 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Edit2, Plus, Trash2, Upload, X } from 'lucide-react'
 import { Popconfirm } from 'antd'
-import { SearchingInput, Pagination } from '../../components/share'
-import { imageUrl } from '../../components/share/getImageUrl'
+import { Avatar, SearchingInput, Pagination } from '../../components/share'
 import {
   useCreateDevice,
   useDeleteDevice,
@@ -267,17 +266,11 @@ export default function Devices() {
                     <td className="py-3">
                       {device.userId ? (
                         <div className="flex items-center gap-2">
-                          {device.userId.profileImage ? (
-                            <img
-                              src={imageUrl(device.userId.profileImage)}
-                              alt={device.userId.name}
-                              className="h-6 w-6 rounded-full object-cover"
-                            />
-                          ) : (
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand/30 text-[10px] font-semibold text-brand-ring">
-                              {device.userId.name ? device.userId.name[0].toUpperCase() : 'U'}
-                            </span>
-                          )}
+                          <Avatar
+                            src={device.userId.profileImage}
+                            name={device.userId.name}
+                            className="h-6 w-6 bg-brand/30 text-[10px] font-semibold text-brand-ring"
+                          />
                           <div className="text-xs">
                             <div className="font-medium text-white">{device.userId.name}</div>
                             <div className="text-gray-400">{device.userId.email}</div>

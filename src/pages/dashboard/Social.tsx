@@ -14,7 +14,7 @@ import {
   useFocusTimeTogetherOverTime,
   useRecentActivity,
 } from '../../hooks/useSocial'
-import { imageUrl } from '../../components/share/getImageUrl'
+import { Avatar } from '../../components/share/Avatar'
 
 export default function Social() {
   const [selectedYear, setSelectedYear] = useState<number>(2026)
@@ -136,17 +136,11 @@ export default function Social() {
                     <tr key={(row.user?.email || 'user') + row.time + idx} className="text-gray-200">
                       <td className="py-3 pl-1">
                         <div className="flex items-center gap-3">
-                          {row.user?.profileImage ? (
-                            <img
-                              src={imageUrl(row.user.profileImage)}
-                              alt={row.user.name}
-                              className="h-8 w-8 rounded-full object-cover"
-                            />
-                          ) : (
-                            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand/30 text-xs font-semibold text-brand-ring">
-                              {initials}
-                            </span>
-                          )}
+                          <Avatar
+                            src={row.user?.profileImage}
+                            name={row.user?.name}
+                            className="h-8 w-8 bg-brand/30 text-xs font-semibold text-brand-ring"
+                          />
                           <div>
                             <div className="font-medium text-white">{row.user?.name || 'Unknown User'}</div>
                             {row.user?.email && (

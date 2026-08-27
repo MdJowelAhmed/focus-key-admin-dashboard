@@ -4,8 +4,7 @@ import { Popconfirm } from 'antd'
 import DeltaStatCard from '../../components/dashboard/DeltaStatCard'
 import { useAnalyticsStats } from '../../hooks/useAnalytics'
 import { useDeleteUser, useUpdateUserStatus, useUsersAnalytics } from '../../hooks/useUsers'
-import { Filtering, Pagination, SearchingInput } from '../../components/share'
-import { imageUrl } from '../../components/share/getImageUrl'
+import { Avatar, Filtering, Pagination, SearchingInput } from '../../components/share'
 
 export default function Users() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -182,26 +181,11 @@ export default function Users() {
                   <tr key={user.userId} className="text-gray-200 hover:bg-surface-elevated/30">
                     <td className="py-3 pl-1">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand/30 text-xs font-semibold text-brand-ring">
-                          {user.profileImage ? (
-                            <img
-                              src={imageUrl(user.profileImage)}
-                              alt={user.name}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <span>
-                              {user.name
-                                ? user.name
-                                    .split(' ')
-                                    .map((n) => n[0])
-                                    .slice(0, 2)
-                                    .join('')
-                                    .toUpperCase()
-                                : 'U'}
-                            </span>
-                          )}
-                        </div>
+                        <Avatar
+                          src={user.profileImage}
+                          name={user.name}
+                          className="h-9 w-9 bg-brand/30 text-xs font-semibold text-brand-ring"
+                        />
                         <div>
                           <div className="font-medium text-white">{user.name || 'N/A'}</div>
                           <div className="text-xs text-gray-400">{user.email}</div>

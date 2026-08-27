@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { message } from 'antd'
 import RichTextEditor from '../../components/dashboard/settings/RichTextEditor'
-import { imageUrl } from '../../components/share/getImageUrl'
+import { Avatar } from '../../components/share/Avatar'
 import {
   useChangePassword,
   useGetProfile,
@@ -170,19 +170,14 @@ function ProfileTab() {
 
       <div className="px-8 py-7">
         <div className="flex items-center gap-5">
-          <label className="group relative h-20 w-20 cursor-pointer overflow-hidden rounded-full bg-gradient-to-br from-brand to-brand-hover ring-4 ring-brand/20">
-            {avatarPreview ? (
-              <img
-                src={imageUrl(avatarPreview)}
-                alt={name || 'Profile'}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="flex h-full w-full items-center justify-center text-xl font-semibold text-white">
-                {initials}
-              </span>
-            )}
-            <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white shadow ring-2 ring-white">
+          <label className="group relative cursor-pointer shrink-0">
+            <Avatar
+              src={avatarPreview}
+              name={name || 'Admin User'}
+              className="h-20 w-20 bg-gradient-to-br from-brand to-brand-hover ring-4 ring-brand/20 text-xl font-semibold text-white"
+              iconClassName="h-10 w-10 text-white"
+            />
+            <span className="absolute -bottom-1 -right-1 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white shadow ring-2 ring-white">
               <Camera size={14} />
             </span>
             <input
