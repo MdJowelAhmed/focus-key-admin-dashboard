@@ -31,12 +31,12 @@ export default function DeltaStatCard({
           <span className="text-xl font-semibold text-white">{valueSuffix}</span>
         )}
       </div>
-      {delta && (
+      {/* {delta && (
         <div className="mt-2 flex items-center gap-1 text-xs">
           <span className="text-accent-success">↗ {delta}</span>
           <span className="text-gray-500">{deltaLabel}</span>
         </div>
-      )}
+      )} */}
     </div>
   )
 }
