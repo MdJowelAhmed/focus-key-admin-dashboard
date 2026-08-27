@@ -300,7 +300,7 @@ export default function Devices() {
                             : 'bg-surface-elevated text-gray-400 border border-surface-border'
                         }`}
                       >
-                        {device.status || 'INACTIVE'}
+                        {device.status === 'ACTIVE' ? 'Active' : device.status === 'INACTIVE' ? 'Inactive' : device.status || 'Inactive'}
                       </span>
                     </td>
                     <td className="py-3 text-xs text-gray-300 max-w-[200px] truncate">

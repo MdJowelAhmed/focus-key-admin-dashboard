@@ -137,8 +137,8 @@ export default function Users() {
                 onChange: (val) => handleStatusChange(val || 'ALL'),
                 options: [
                   { label: 'All Statuses', value: 'ALL' },
-                  { label: 'ACTIVE', value: 'ACTIVE' },
-                  { label: 'INACTIVE', value: 'INACTIVE' },
+                  { label: 'Active', value: 'ACTIVE' },
+                  { label: 'Inactive', value: 'INACTIVE' },
                 ],
               },
             ]}
@@ -210,10 +210,10 @@ export default function Users() {
                         }`}
                       >
                         <option value="ACTIVE" className="bg-surface-card text-white">
-                          ACTIVE
+                          Active
                         </option>
                         <option value="INACTIVE" className="bg-surface-card text-white">
-                          INACTIVE
+                          Inactive
                         </option>
                       </select>
                     </td>
