@@ -1,5 +1,4 @@
 import { useLocation } from 'react-router-dom'
-import PresentKeyLogo from '../auth/Logo'
 
 const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   '/dashboard': {
@@ -29,9 +28,6 @@ export default function Topbar() {
       <div>
         <h1 className="text-3xl font-semibold text-white">{meta.title}</h1>
         <p className="mt-1 text-sm text-gray-400">{meta.subtitle}</p>
-      </div>
-      <div className="shrink-0">
-        <PresentKeyLogo size={34} />
       </div>
     </header>
   )
