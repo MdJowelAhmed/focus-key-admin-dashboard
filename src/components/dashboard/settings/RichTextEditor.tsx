@@ -17,7 +17,7 @@ export default function RichTextEditor({ value, onChange, placeholder, height = 
       return {
         readonly: false,
         height,
-        theme: 'default',
+        theme: 'dark',
         placeholder: placeholder ?? 'Start typing...',
         toolbarButtonSize: 'middle' as const,
         toolbarAdaptive: false,
@@ -41,7 +41,7 @@ export default function RichTextEditor({ value, onChange, placeholder, height = 
   )
 
   return (
-    <div className="jodit-light-wrapper">
+    <div className="jodit-dark-wrapper overflow-hidden rounded-xl border border-surface-border">
       <JoditEditor
         ref={editor}
         value={value}
