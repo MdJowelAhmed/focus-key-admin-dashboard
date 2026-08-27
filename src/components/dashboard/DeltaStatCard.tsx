@@ -13,8 +13,7 @@ export default function DeltaStatCard({
   label,
   value,
   valueSuffix,
-  delta,
-  deltaLabel = 'vs last 7 days',
+
   icon: Icon,
 }: Props) {
   return (
