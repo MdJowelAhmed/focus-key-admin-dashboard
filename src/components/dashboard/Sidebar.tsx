@@ -32,7 +32,7 @@ export default function Sidebar({ user, onLogout }: Props) {
     <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-surface-border bg-surface-sidebar">
       <div className="flex items-center gap-3 px-6 py-6">
         <Link to="/dashboard" className="transition-opacity hover:opacity-90">
-          <PresentKeyLogo size={34} />
+          <img src="/logo3.png" alt="Focus Key Logo" className="h-10 w-60 object-cover rounded-lg" />
         </Link>
       </div>
 

@@ -1,27 +1,22 @@
 type Props = {
-  size?: number
-  showWordmark?: boolean
+  height?: number
+  width?: number
 }
 
-export default function Logo({ size = 40, showWordmark = true }: Props) {
+export default function Logo({ height = 40, width = 120 }: Props) {
   return (
     <div className="flex items-center gap-2">
       <div
         className="flex items-center justify-center"
-        style={{ height: size, width: size }}
+        style={{ height, width }}
       >
         <img
-          src="/logo.png"
+          src="/logo3.png"
           alt="Focus Key Logo"
-          className="h-full w-full object-contain"
+          className="h-full w-full object-cover rounded-lg"
         />
       </div>
-      {showWordmark && (
-        <div className="text-lg font-semibold leading-none">
-          <span className="text-white">Focus </span>
-          <span className="text-brand">Key</span>
-        </div>
-      )}
+ 
     </div>
   )
 }
