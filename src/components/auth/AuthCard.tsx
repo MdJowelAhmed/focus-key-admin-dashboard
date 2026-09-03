@@ -21,7 +21,7 @@ export default function AuthCard({
       }`}
     >
       <div className="flex flex-col items-center">
-        <Logo size={86} showWordmark={false} />
+        <Logo width={120} height={40} />
         {title && (
           <h1 className="mt-6 text-2xl font-semibold text-white">{title}</h1>
         )}

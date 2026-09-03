@@ -1,6 +1,5 @@
 import { Link, NavLink } from 'react-router-dom'
 import { Building2, Cpu, HelpCircle, LogOut, MessageCircle, Settings, Users, type LucideIcon } from 'lucide-react'
-import PresentKeyLogo from '../auth/Logo'
 import { Avatar } from '../share/Avatar'
 
 type NavItem = {
