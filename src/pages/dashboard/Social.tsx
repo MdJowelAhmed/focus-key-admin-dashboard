@@ -1,4 +1,4 @@
-import { useState } from 'react'
+// import { useState } from 'react'
 import {
   CheckCircle2,
   Heart,
@@ -7,23 +7,23 @@ import {
   Users as UsersIcon,
 } from 'lucide-react'
 import DeltaStatCard from '../../components/dashboard/DeltaStatCard'
-import FocusTimeChart from '../../components/dashboard/FocusTimeChart'
+// import FocusTimeChart from '../../components/dashboard/FocusTimeChart'
 import {
   useEngagementStats,
-  useFocusTimeTogetherOverTime,
+  // useFocusTimeTogetherOverTime,
   useRecentActivity,
 } from '../../hooks/useSocial'
 import { Avatar } from '../../components/share/Avatar'
 
 export default function Social() {
-  const [selectedYear, setSelectedYear] = useState<number>(2026)
-  const [selectedDays, setSelectedDays] = useState<number>(7)
+  // const [selectedYear, setSelectedYear] = useState<number>(2026)
+  // const [selectedDays, setSelectedDays] = useState<number>(7)
 
   const { data: engagementStats, isLoading: isStatsLoading } = useEngagementStats()
-  const { data: focusTogetherData, isLoading: isChartLoading } = useFocusTimeTogetherOverTime({
-    year: selectedYear,
-    days: selectedDays,
-  })
+  // const { data: focusTogetherData, isLoading: isChartLoading } = useFocusTimeTogetherOverTime({
+  //   year: selectedYear,
+  //   days: selectedDays,
+  // })
   const { data: recentActivityList, isLoading: isActivityLoading } = useRecentActivity()
 
   const formatter = new Intl.NumberFormat('en-US')
@@ -62,17 +62,17 @@ export default function Social() {
     // },
   ]
 
-  const chartData = (focusTogetherData?.focusTimeTogetherOverTime || []).map((item) => {
-    const d = new Date(item.date)
-    const dateLabel = !isNaN(d.getTime())
-      ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      : item.date
+  // const chartData = (focusTogetherData?.focusTimeTogetherOverTime || []).map((item) => {
+  //   const d = new Date(item.date)
+  //   const dateLabel = !isNaN(d.getTime())
+  //     ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  //     : item.date
 
-    return {
-      date: dateLabel,
-      hours: item.focusMinutes,
-    }
-  })
+  //   return {
+  //     date: dateLabel,
+  //     hours: item.focusMinutes,
+  //   }
+  // })
 
   return (
     <div className="flex flex-col gap-6 pb-6">
@@ -88,7 +88,7 @@ export default function Social() {
         ))}
       </section>
 
-      <section className="w-full">
+      {/* <section className="w-full">
         <FocusTimeChart
           title="Focus Time Together Over Time"
           data={chartData}
@@ -99,7 +99,7 @@ export default function Social() {
           selectedYear={selectedYear}
           onYearChange={setSelectedYear}
         />
-      </section>
+      </section> */}
 
       <section className="rounded-2xl border border-surface-border bg-surface-card p-5">
         <h3 className="text-base font-semibold text-white">Recent Social Activity</h3>
