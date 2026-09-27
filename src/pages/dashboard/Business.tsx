@@ -68,11 +68,11 @@ export default function Business() {
       value: isStatsLoading ? '...' : formatter.format(stats?.usersWithPartners ?? 0),
       icon: UsersIcon,
     },
-    {
-      label: 'Joint Sessions',
-      value: isStatsLoading ? '...' : formatter.format(stats?.jointSessions ?? 0),
-      icon: UsersRound,
-    },
+    // {
+    //   label: 'Joint Sessions',
+    //   value: isStatsLoading ? '...' : formatter.format(stats?.jointSessions ?? 0),
+    //   icon: UsersRound,
+    // },
   ]
 
   const chartData = (focusTimeData?.focusTimeOverTime || []).map((item) => ({

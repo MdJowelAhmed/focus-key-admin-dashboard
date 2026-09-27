@@ -51,17 +51,17 @@ export default function Social() {
       value: isStatsLoading ? '...' : formatter.format(engagementStats?.nudgesSent ?? 0),
       icon: Send,
     },
-    {
-      label: 'Joint Sessions',
-      value: isStatsLoading ? '...' : formatter.format(engagementStats?.jointSessions ?? 0),
-      icon: Heart,
-    },
-    {
-      label: 'Time Focused Together',
-      value: isChartLoading ? '...' : formatter.format(totalFocusMinutes),
-      valueSuffix: 'mins',
-      icon: Timer,
-    },
+    // {
+    //   label: 'Joint Sessions',
+    //   value: isStatsLoading ? '...' : formatter.format(engagementStats?.jointSessions ?? 0),
+    //   icon: Heart,
+    // },
+    // {
+    //   label: 'Time Focused Together',
+    //   value: isChartLoading ? '...' : formatter.format(totalFocusMinutes),
+    //   valueSuffix: 'mins',
+    //   icon: Timer,
+    // },
   ]
 
   const chartData = (focusTogetherData?.focusTimeTogetherOverTime || []).map((item) => {
