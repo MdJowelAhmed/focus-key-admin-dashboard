@@ -2,8 +2,10 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Edit2, Plus, Trash2, Upload, X } from 'lucide-react'
 import { Popconfirm } from 'antd'
+import { AxiosError } from 'axios'
 import { Avatar, SearchingInput, Pagination } from '../../components/share'
 import {
+  useBulkUploadDevices,
   useCreateDevice,
   useDeleteDevice,
   useDevices,
@@ -27,6 +29,7 @@ export default function Devices() {
   const createDevice = useCreateDevice()
   const updateDevice = useUpdateDevice()
   const deleteDevice = useDeleteDevice()
+  const bulkUploadDevice = useBulkUploadDevices()
 
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [uploadInfo, setUploadInfo] = useState<string | null>(null)
@@ -142,42 +145,20 @@ export default function Devices() {
       return
     }
 
-    try {
-      const text = await file.text()
-      const rows = parseCsv(text)
-      if (rows.length === 0) {
-        setUploadError('CSV is empty.')
-        return
-      }
-
-      const startsWithHeader =
-        rows[0][0]?.trim().toLowerCase().includes('uid') ||
-        rows[0][0]?.trim().toLowerCase().includes('serial')
-      const dataRows = startsWithHeader ? rows.slice(1) : rows
-
-      let successCount = 0
-      for (const row of dataRows) {
-        const uid = (row[0] ?? '').trim()
-        const notes = (row[1] ?? '').trim()
-        if (!uid) continue
-
-        try {
-          await createDevice.mutateAsync({ uid, notes })
-          successCount++
-        } catch {
-          // continue with remaining rows
+    bulkUploadDevice.mutate(file, {
+      onSuccess: (res) => {
+        setUploadInfo(res?.message || 'Bulk upload successful.')
+      },
+      onError: (err: unknown) => {
+        let errMsg = 'Bulk upload failed.'
+        if (err instanceof AxiosError && err.response?.data?.message) {
+          errMsg = err.response.data.message
+        } else if (err instanceof Error) {
+          errMsg = err.message
         }
-      }
-
-      if (successCount > 0) {
-        setUploadInfo(`${successCount} device(s) uploaded successfully.`)
-      } else {
-        setUploadError('No valid devices were uploaded.')
-      }
-    } catch (err) {
-      setUploadError('Failed to read CSV file.')
-      console.error(err)
-    }
+        setUploadError(errMsg)
+      },
+    })
   }
 
   return (
@@ -195,10 +176,11 @@ export default function Devices() {
             <button
               type="button"
               onClick={handleUploadClick}
-              className="flex h-10 items-center gap-2 rounded-md border border-surface-border bg-surface-elevated px-3 text-sm text-gray-200 transition-colors hover:text-white"
+              disabled={bulkUploadDevice.isPending}
+              className="flex h-10 items-center gap-2 rounded-md border border-surface-border bg-surface-elevated px-3 text-sm text-gray-200 transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Upload size={16} />
-              Bulk Upload CSV
+              {bulkUploadDevice.isPending ? 'Uploading...' : 'Bulk Upload CSV'}
             </button>
             <button
               type="button"

@@ -106,3 +106,34 @@ export function useDeleteDevice() {
     },
   })
 }
+
+export function useBulkUploadDevices() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await api.post('/devices/bulk-upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      return response.data
+    },
+    onSuccess: (data) => {
+      message.success(data?.message || 'Bulk upload completed successfully')
+      queryClient.invalidateQueries({ queryKey: ['devices'] })
+    },
+    onError: (err: unknown) => {
+      let errMsg = 'Failed to upload CSV file'
+      if (err instanceof AxiosError && err.response?.data?.message) {
+        errMsg = err.response.data.message
+      } else if (err instanceof Error) {
+        errMsg = err.message
+      }
+      message.error(errMsg)
+    },
+  })
+}
