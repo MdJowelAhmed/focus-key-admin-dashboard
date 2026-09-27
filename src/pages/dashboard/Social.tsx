@@ -3,7 +3,6 @@ import {
   CheckCircle2,
   Heart,
   Send,
-  Timer,
   UserPlus,
   Users as UsersIcon,
 } from 'lucide-react'
@@ -29,13 +28,12 @@ export default function Social() {
 
   const formatter = new Intl.NumberFormat('en-US')
 
-  // Calculate total focus time from the graph points
-  const totalFocusMinutes = (focusTogetherData?.focusTimeTogetherOverTime || []).reduce(
-    (acc, curr) => acc + (curr.focusMinutes || 0),
-    0
-  )
-
-  const headlineStats = [
+  const headlineStats: {
+    label: string
+    value: string
+    valueSuffix?: string
+    icon: typeof UsersIcon
+  }[] = [
     {
       label: 'Users With Partners',
       value: isStatsLoading ? '...' : formatter.format(engagementStats?.usersWithPartners ?? 0),
