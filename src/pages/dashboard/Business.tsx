@@ -25,6 +25,15 @@ export default function Business() {
 
   const formatter = new Intl.NumberFormat('en-US')
 
+  const formatFocusTime = (minutes: number) => {
+    if (!minutes) return '0m'
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    if (hours === 0) return `${mins}m`
+    if (mins === 0) return `${formatter.format(hours)}h`
+    return `${formatter.format(hours)}h ${mins}m`
+  }
+
   const headlineStats = [
     {
       label: 'Total Users',
@@ -48,7 +57,7 @@ export default function Business() {
     },
     {
       label: 'Total Time Focused',
-      value: isStatsLoading ? '...' : formatter.format(stats?.totalTimeFocused ?? 0),
+      value: isStatsLoading ? '...' : formatFocusTime(stats?.totalTimeFocused ?? 0),
       icon: Clock,
     },
   ]
