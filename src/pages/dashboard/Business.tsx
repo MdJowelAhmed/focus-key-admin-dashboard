@@ -46,6 +46,11 @@ export default function Business() {
       value: isStatsLoading ? '...' : formatter.format(stats?.totalFocusSessionsThisWeek ?? 0),
       icon: Clock,
     },
+    {
+      label: 'Total Time Focused',
+      value: isStatsLoading ? '...' : formatter.format(stats?.totalTimeFocused ?? 0),
+      icon: Clock,
+    },
   ]
 
   const keyStats = [
@@ -95,7 +100,7 @@ export default function Business() {
 
   return (
     <div className="flex flex-col gap-6 pb-6">
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {headlineStats.map((stat) => (
           <DeltaStatCard
             key={stat.label}

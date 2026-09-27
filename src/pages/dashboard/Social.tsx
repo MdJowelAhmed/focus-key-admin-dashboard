@@ -41,11 +41,11 @@ export default function Social() {
       value: isStatsLoading ? '...' : formatter.format(engagementStats?.usersWithPartners ?? 0),
       icon: UsersIcon,
     },
-    {
-      label: 'Partner Requests Accepted',
-      value: isStatsLoading ? '...' : formatter.format(engagementStats?.partnerRequestsAccepted ?? 0),
-      icon: UserPlus,
-    },
+    // {
+    //   label: 'Partner Requests Accepted',
+    //   value: isStatsLoading ? '...' : formatter.format(engagementStats?.partnerRequestsAccepted ?? 0),
+    //   icon: UserPlus,
+    // },
     {
       label: 'Nudges Sent',
       value: isStatsLoading ? '...' : formatter.format(engagementStats?.nudgesSent ?? 0),

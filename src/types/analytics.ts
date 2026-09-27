@@ -9,6 +9,7 @@ export interface AnalyticsStats {
   jointSessions: number
   totalLocks: number
   totalUnlocks: number
+  totalTimeFocused: number
 }
 
 export interface AnalyticsStatsResponse {
@@ -38,6 +39,12 @@ export interface FocusTimeOverTimeResponse {
   message: string
   data: FocusTimeOverTimeData
 }
+export interface TotalTimeFocused {
+  date: string
+  focusMinutes: number
+}
+
+
 
 export interface UserAnalyticsItem {
   userId: string
