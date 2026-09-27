@@ -27,7 +27,10 @@ export function useFocusTimeTogetherOverTime({
     queryKey: ['analytics', 'focus-time-together-over-time', year, days],
     queryFn: async () => {
       const params = new URLSearchParams()
-      if (year !== undefined) params.append('year', String(year))
+      if (year !== undefined) {
+        params.append('year', String(year))
+        params.append('years', String(year))
+      }
       if (days !== undefined) params.append('days', String(days))
 
       const queryString = params.toString()

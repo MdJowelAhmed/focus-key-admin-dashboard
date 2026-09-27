@@ -28,6 +28,11 @@ export interface FocusTimeOverTimeData {
   focusTimeOverTime: FocusTimeOverTimeItem[]
 }
 
+export interface FocusTimeOverTimeParams {
+  year?: number
+  days?: number
+}
+
 export interface FocusTimeOverTimeResponse {
   success: boolean
   message: string

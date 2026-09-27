@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Activity,
   Clock,
@@ -6,16 +7,21 @@ import {
   Unlock,
   ShieldCheck,
   Users as UsersIcon,
-  UserCheck,
-  UsersRound,
+  UserCheck
 } from 'lucide-react'
 import DeltaStatCard from '../../components/dashboard/DeltaStatCard'
 import FocusTimeChart from '../../components/dashboard/FocusTimeChart'
 import { useAnalyticsStats, useFocusTimeOverTime } from '../../hooks/useAnalytics'
 
 export default function Business() {
+  const [selectedYear, setSelectedYear] = useState<number>(2026)
+  const [selectedDays, setSelectedDays] = useState<number>(7)
+
   const { data: stats, isLoading: isStatsLoading } = useAnalyticsStats()
-  const { data: focusTimeData, isLoading: isChartLoading } = useFocusTimeOverTime()
+  const { data: focusTimeData, isLoading: isChartLoading } = useFocusTimeOverTime({
+    year: selectedYear,
+    days: selectedDays,
+  })
 
   const formatter = new Intl.NumberFormat('en-US')
 
@@ -75,10 +81,17 @@ export default function Business() {
     // },
   ]
 
-  const chartData = (focusTimeData?.focusTimeOverTime || []).map((item) => ({
-    date: item.date,
-    hours: item.focusMinutes,
-  }))
+  const chartData = (focusTimeData?.focusTimeOverTime || []).map((item) => {
+    const d = new Date(item.date)
+    const dateLabel = !isNaN(d.getTime())
+      ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      : item.date
+
+    return {
+      date: dateLabel,
+      hours: item.focusMinutes,
+    }
+  })
 
   return (
     <div className="flex flex-col gap-6 pb-6">
@@ -99,6 +112,10 @@ export default function Business() {
           data={chartData}
           seriesLabel="Focus Time (Minutes)"
           isLoading={isChartLoading}
+          selectedDays={selectedDays}
+          onDaysChange={setSelectedDays}
+          selectedYear={selectedYear}
+          onYearChange={setSelectedYear}
         />
       </section>
 
